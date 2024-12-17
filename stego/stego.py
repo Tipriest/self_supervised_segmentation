@@ -12,7 +12,7 @@ import pytorch_lightning as pl
 import omegaconf
 import os
 import wandb
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import io
 
 
@@ -70,6 +70,7 @@ class Stego(pl.LightningModule):
         self.cd_hist = torch.zeros(40)
 
         self.save_hyperparameters()
+        self.validation_step_outputs = []
 
     def reset_clusters(self, n_classes, extra_clusters):
         """
@@ -284,7 +285,13 @@ class Stego(pl.LightningModule):
             self.log("val/linear/Accuracy", linear_metrics["test/linear/Accuracy"])
             self.log("val/cluster/mIoU", cluster_metrics["test/cluster/mIoU"])
             self.log("val/cluster/Accuracy", cluster_metrics["test/cluster/Accuracy"])
-
+            self.validation_step_outputs.append({
+                "img": img[: self.cfg.val_n_imgs].detach().cpu(),
+                "linear_preds": linear_preds[: self.cfg.val_n_imgs].detach().cpu(),
+                "cluster_preds": cluster_preds[: self.cfg.val_n_imgs].detach().cpu(),
+                "label": label[: self.cfg.val_n_imgs].detach().cpu(),
+            })
+            
             return {
                 "img": img[: self.cfg.val_n_imgs].detach().cpu(),
                 "linear_preds": linear_preds[: self.cfg.val_n_imgs].detach().cpu(),
@@ -292,17 +299,23 @@ class Stego(pl.LightningModule):
                 "label": label[: self.cfg.val_n_imgs].detach().cpu(),
             }
 
-    def on_validation_epoch_end(self, outputs) -> None:
-        super().on_validation_epoch_end(outputs)
+    def on_validation_epoch_end(self) -> None:
+        # super().on_validation_epoch_end()
         with torch.no_grad():
             self.linear_metrics.reset()
             self.cluster_metrics.reset()
-
-        for i in range(self.cfg.val_n_imgs):
-            img = outputs[0]["img"][i].cpu().numpy().transpose((1, 2, 0))
-            label = torch.squeeze(outputs[0]["label"][i]).cpu().numpy()
-            cluster = torch.squeeze(outputs[0]["cluster_preds"][i]).cpu().numpy()
-            linear = torch.squeeze(outputs[0]["linear_preds"][i]).cpu().numpy()
+        # print("////////////////////////////////")
+        # print(len(self.validation_step_outputs))
+        # print(self.cfg.val_n_imgs)
+        # print("////////////////////////////////")
+        num_outputs = len(self.validation_step_outputs)
+        for i in range(min(self.cfg.val_n_imgs, num_outputs)):
+            sample = self.validation_step_outputs[i]
+            img = sample["img"][i].cpu().numpy().transpose((1, 2, 0))
+            label = torch.squeeze(sample["label"][i]).cpu().numpy()
+            cluster = torch.squeeze(sample["cluster_preds"][i]).cpu().numpy()
+            linear = torch.squeeze(sample["linear_preds"][i]).cpu().numpy()
+            
             vis = wandb.Image(
                 img,
                 masks={
@@ -313,6 +326,23 @@ class Stego(pl.LightningModule):
                 caption="Image" + str(i),
             )
             self.logger.experiment.log({"Image" + str(i): vis})
+        # # 打印 outputs 检查数据结构
+        # print(f"Outputs at validation epoch end: {outputs}")
+        # for i in range(self.cfg.val_n_imgs):
+        #     img = outputs[0]["img"][i].cpu().numpy().transpose((1, 2, 0))
+        #     label = torch.squeeze(outputs[0]["label"][i]).cpu().numpy()
+        #     cluster = torch.squeeze(outputs[0]["cluster_preds"][i]).cpu().numpy()
+        #     linear = torch.squeeze(outputs[0]["linear_preds"][i]).cpu().numpy()
+        #     vis = wandb.Image(
+        #         img,
+        #         masks={
+        #             "label": {"mask_data": label},
+        #             "cluster": {"mask_data": cluster},
+        #             "linear": {"mask_data": linear},
+        #         },
+        #         caption="Image" + str(i),
+        #     )
+        #     self.logger.experiment.log({"Image" + str(i): vis})
 
         self.cd_hist = self.cd_hist / torch.sum(self.cd_hist)
         x = [-1 + i * (2 / 40) + 1 / 40 for i in range(40)]
@@ -328,4 +358,5 @@ class Stego(pl.LightningModule):
         hist_vis = wandb.Image(hist_img, caption="Learned Feature Similarity Distribution")
         self.logger.experiment.log({"Histogram": hist_vis})
         img_buf.close()
+        self.validation_step_outputs.clear()
         self.cd_hist = torch.zeros(40)

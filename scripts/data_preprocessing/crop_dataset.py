@@ -29,13 +29,13 @@ from os.path import join
 from tqdm import tqdm
 from torchvision.transforms.functional import five_crop
 
-from scripts.data_preprocessing.preprocessing_utils import create_dataset_structure
+from preprocessing_utils import create_dataset_structure
 from PIL import Image
 
 
-DATA_DIR = "/data"
-INPUT_NAME = "cocostuff_curated"
-OUTPUT_NAME = "cocostuff_curated_cropped"
+DATA_DIR = "/home/tipriest/data/TerrainSeg/freiburg_forest"
+INPUT_NAME = "freiburg_forest_preprocessed"
+OUTPUT_NAME = "freiburg_forest_cropped"
 
 # An image of size HxW will be five-cropped with target size of (CROP_RATIO*H)x(CROP_RATIO*W)
 CROP_RATIO = 0.5

@@ -38,6 +38,7 @@ cd self_supervised_segmentation
 Install the environment:
 ```
 conda env create -f environment.yml
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 conda activate stego
 pip install -e .
 ```

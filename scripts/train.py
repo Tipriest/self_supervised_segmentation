@@ -16,7 +16,8 @@
 #
 ############################################
 
-
+import os
+import sys
 from torch.utils.data import DataLoader
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -31,6 +32,11 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+grandparent_dir = os.path.dirname(script_dir)
+os.environ['PYTHONPATH'] = grandparent_dir + os.pathsep + os.environ.get('PYTHONPATH', '')
+sys.path.append(grandparent_dir)
+
 from stego.stego import Stego
 from stego.utils import prep_args, get_transform
 from stego.data import ContrastiveSegDataset
@@ -43,7 +49,7 @@ def my_app(cfg: DictConfig) -> None:
 
     seed_everything(seed=0)
 
-    if cfg.model_path is not None:
+    if cfg.model_path:
         model = Stego.load_from_checkpoint(cfg.model_path).cuda()
     else:
         model = Stego(cfg.num_classes).cuda()
@@ -57,7 +63,7 @@ def my_app(cfg: DictConfig) -> None:
         image_set="train",
         transform=get_transform(cfg.resolution, False, "center"),
         target_transform=get_transform(cfg.resolution, True, "center"),
-        model_type=model.backbone_name,
+        model_type=model.backbone.backbone_type,
         resolution=cfg.resolution,
         num_neighbors=cfg.num_neighbors,
         pos_images=True,
@@ -70,7 +76,7 @@ def my_app(cfg: DictConfig) -> None:
         image_set="val",
         transform=get_transform(cfg.resolution, False, "center"),
         target_transform=get_transform(cfg.resolution, True, "center"),
-        model_type=model.backbone_name,
+        model_type=model.backbone.backbone_type,
         resolution=cfg.resolution,
     )
 
@@ -104,7 +110,7 @@ def my_app(cfg: DictConfig) -> None:
                 mode="max",
             )
         ],
-        gpus=1,
+        # gpus=1,
         val_check_interval=cfg.val_check_interval,
     )
     trainer.fit(model, train_loader, val_loader)

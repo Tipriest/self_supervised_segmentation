@@ -15,7 +15,7 @@ from os.path import join, exists
 import wget
 import os
 
-models_dir = "models"
+models_dir = "/home/tipriest/data/TerrainSeg/models"
 os.makedirs(models_dir, exist_ok=True)
 model_url_root = "https://marhamilresearch4.blob.core.windows.net/stego-public/models/models/"
 model_names = []

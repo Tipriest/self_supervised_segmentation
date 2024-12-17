@@ -15,6 +15,7 @@
 ############################################
 
 import os
+import sys
 from os.path import join
 import hydra
 import numpy as np
@@ -25,6 +26,10 @@ from pytorch_lightning import seed_everything
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+grandparent_dir = os.path.dirname(script_dir)
+os.environ['PYTHONPATH'] = grandparent_dir + os.pathsep + os.environ.get('PYTHONPATH', '')
+sys.path.append(grandparent_dir)
 from stego.data import ContrastiveSegDataset
 from stego.stego import Stego
 from stego.utils import prep_args, get_transform, get_nn_file_name
@@ -52,7 +57,7 @@ def my_app(cfg: DictConfig) -> None:
     model = Stego(1).cuda()
 
     for image_set in image_sets:
-        feature_cache_file = get_nn_file_name(cfg.data_dir, cfg.dataset_name, model.backbone_name, image_set, res)
+        feature_cache_file = get_nn_file_name(cfg.data_dir, cfg.dataset_name, model.backbone.backbone_type, image_set, res)
         if not os.path.exists(feature_cache_file):
             print("{} not found, computing".format(feature_cache_file))
             dataset = ContrastiveSegDataset(
@@ -61,7 +66,7 @@ def my_app(cfg: DictConfig) -> None:
                 image_set=image_set,
                 transform=get_transform(res, False, "center"),
                 target_transform=get_transform(res, True, "center"),
-                model_type=model.backbone_name,
+                model_type=model.backbone.backbone_type,
                 resolution=res,
             )
 
@@ -87,7 +92,7 @@ def my_app(cfg: DictConfig) -> None:
                 nearest_neighbors = torch.cat(all_nns, dim=0)
 
                 np.savez_compressed(feature_cache_file, nns=nearest_neighbors.numpy())
-                print("Saved NNs", model.backbone_name, cfg.dataset_name, image_set)
+                print("Saved NNs", model.backbone.backbone_type, cfg.dataset_name, image_set)
 
 
 if __name__ == "__main__":

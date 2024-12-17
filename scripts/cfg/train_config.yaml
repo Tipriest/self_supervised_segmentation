@@ -1,21 +1,22 @@
-data_dir: "/scratch/tmp.19104891.plibera"
-dataset_name: "RUGD_preprocessed_cropped"
+data_dir: "/home/tipriest/data/TerrainSeg/freiburg_forest"
+dataset_name: "freiburg_forest_cropped"
 
 # Output directory to save the trained checkpoints during training
-checkpoint_dir: "/cluster/scratch/plibera/checkpoints/RUGD_fine-tuning"
+checkpoint_dir: "/home/tipriest/data/TerrainSeg/models"
 # (Optional) Checkpoint path to initialize the training
-model_path: "/cluster/home/plibera/self_supervised_segmentation/models/stego_cocostuff27_vit_base_5_cluster_linear_fine_tuning.ckpt"
+# model_path: "/home/tipriest/data/TerrainSeg/models/epoch=5-step=4800.ckpt"
+model_path: ""
 
 
 resolution: 224
 num_classes: 24
 
 num_workers: 24
-batch_size: 32
+batch_size: 96
 
 scalar_log_freq: 1
-max_steps: 5000
-val_check_interval: 100
+max_steps: 8000
+val_check_interval: 10
 
 num_neighbors: 5
 
@@ -25,5 +26,5 @@ extra_clusters: 0
 
 # WandB
 wandb_project: "stego"
-wandb_name: "RUGD_fine-tuning"
+wandb_name: "freiburg_forest"
 wandb_log_model: "all"

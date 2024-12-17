@@ -46,7 +46,7 @@ from PIL import Image
 from scripts.data_preprocessing.preprocessing_utils import create_dataset_structure
 
 
-DATA_DIR = "/data"
+DATA_DIR = "/home/tipriest/data"
 INPUT_NAME = "cocostuff"
 OUTPUT_NAME = "cocostuff_preprocessed"
 

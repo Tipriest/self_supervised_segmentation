@@ -1,9 +1,9 @@
-data_dir: "/cluster/scratch/plibera"
-dataset_name: "cocostuff_curated_cropped"
+data_dir: "/home/tipriest/data/TerrainSeg/freiburg_forest"
+dataset_name: "freiburg_forest_cropped"
 image_sets:
   - "train"
   - "val"
 
 resolution: 224
-batch_size: 8
+batch_size: 96
 num_workers: 24

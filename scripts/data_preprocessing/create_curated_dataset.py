@@ -34,12 +34,12 @@ from tqdm import tqdm
 from scripts.data_preprocessing.preprocessing_utils import *
 
 
-DATA_DIR = "/data"
+DATA_DIR = "/home/tipriest/data"
 INPUT_NAME = "cocostuff_preprocessed"
 OUTPUT_NAME = "cocostuff_curated"
 
-TRAIN_SAMPLES_FILE = "/data/cocostuff/curated/train2017/Coco164kFull_Stuff_Coarse.txt"
-VAL_SAMPLES_FILE = "/data/cocostuff/curated/val2017/Coco164kFull_Stuff_Coarse.txt"
+TRAIN_SAMPLES_FILE = "/home/tipriest/data/cocostuff/curated/train2017/Coco164kFull_Stuff_Coarse.txt"
+VAL_SAMPLES_FILE = "/home/tipriest/data/cocostuff/curated/val2017/Coco164kFull_Stuff_Coarse.txt"
 
 
 def preprocess_samples(input_dir, output_dir, subset, input_subset, sample_file):

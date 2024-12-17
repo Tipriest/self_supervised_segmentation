@@ -9,37 +9,11 @@ from distutils.core import setup
 
 INSTALL_REQUIRES = [
     # generic
-    "numpy",
-    "tqdm",
-    "kornia>=0.6.5",
-    "pip",
-    "torchvision",
-    "torch>=1.21",
-    "torchmetrics",
-    "pytorch_lightning>=1.6.5",
-    "pytest",
-    "scipy",
-    "scikit-image",
-    "scikit-learn",
-    "matplotlib",
-    "seaborn",
-    "pandas",
     "pytictac",
-    "torch_geometric",
-    "omegaconf",
-    "optuna",
-    "neptune",
     "fast-slic",
-    "hydra-core",
-    "prettytable",
-    "termcolor",
-    "pydensecrf@git+https://github.com/lucasb-eyer/pydensecrf.git",
+    "torch_geometric",
     "liegroups@git+https://github.com/mmattamala/liegroups",
-    "opencv-python",
-    "wget",
     "rospkg",
-    "wandb",
-    "gdown"
 ]
 
 setup(

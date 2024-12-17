@@ -48,17 +48,46 @@ from os.path import join
 import numpy as np
 from tqdm import tqdm
 from PIL import Image
-
-from scripts.data_preprocessing.preprocessing_utils import (
-    create_dataset_structure,
-    convert_rgb_label,
-    preprocess_and_copy_image,
-)
+import shutil
 
 
-DATA_DIR = "/data"
+
+DATA_DIR = "/home/tipriest/data/TerrainSeg/freiburg_forest"
 INPUT_NAME = "freiburg_forest_annotated"
 OUTPUT_NAME = "freiburg_forest_preprocessed"
+
+
+def create_dataset_structure(dataset_dir):
+    os.makedirs(dataset_dir, exist_ok=True)
+    os.makedirs(join(dataset_dir, "imgs"), exist_ok=True)
+    os.makedirs(join(dataset_dir, "imgs", "train"), exist_ok=True)
+    os.makedirs(join(dataset_dir, "imgs", "val"), exist_ok=True)
+    os.makedirs(join(dataset_dir, "labels"), exist_ok=True)
+    os.makedirs(join(dataset_dir, "labels", "train"), exist_ok=True)
+    os.makedirs(join(dataset_dir, "labels", "val"), exist_ok=True)
+
+
+def convert_rgb_label(label, cmap):
+    for i in range(cmap.shape[0]):
+        color = cmap[i]
+        indices = np.all(label == color, axis=2)
+        label[indices] = i
+    return np.unique(label, axis=-1).squeeze()
+
+
+def preprocess_and_copy_image(input_name, output_name, is_label=False, rgb_label=False, cmap=None):
+    if os.path.isfile(output_name):
+        return
+    if is_label and rgb_label:
+        if cmap is None:
+            raise ValueError("No colormap provided to convert the RGB label")
+        image = Image.open(input_name).convert("RGB")
+        img = np.array(image)
+        img = convert_rgb_label(img, cmap)
+        image = Image.fromarray(img)
+        image.save(output_name)
+    else:
+        shutil.copyfile(input_name, output_name)
 
 
 FF_CMAP = np.array(
@@ -68,11 +97,8 @@ FF_CMAP = np.array(
         (0, 255, 0),  # Grass
         (102, 102, 51),  # Vegetation
         (0, 120, 255),  # Sky
-        (
-            0,
-            60,
-            0,
-        ),  # Tree (separate color present in the dataset, but assigned to class Vegetation in the dataset's official readme)
+        (0, 60, 0,),    # Tree
+        # (separate color present in the dataset, but assigned to class Vegetation in the dataset's official readme)
     ]
 )
 
@@ -88,27 +114,29 @@ def preprocess_and_copy_label_FF(input_name, output_name, cmap):
     image.save(output_name)
 
 
-def preprocess_samples(input_dir, output_dir, subset, input_subset):
-    print("Processing subset {}".format(subset))
+def preprocess_samples(input_dir, output_dir, input_subset, output_subset):
+    print("Processing subset {}".format(output_subset))
     label_names = os.listdir(join(input_dir, input_subset, "GT_color"))
     for label_name in tqdm(label_names):
         sample_name = label_name.split("_")[0]
         img_path = join(input_dir, input_subset, "rgb", sample_name + "_Clipped.jpg")
         label_path = join(input_dir, input_subset, "GT_color", label_name)
-        preprocess_and_copy_image(img_path, join(output_dir, "imgs", subset, sample_name + ".jpg"), False)
+        preprocess_and_copy_image(input_name=img_path,
+                                  output_name=join(output_dir, "imgs", output_subset, sample_name + ".jpg"),
+                                  is_label=False)
         preprocess_and_copy_label_FF(
             label_path,
-            join(output_dir, "labels", subset, sample_name + ".png"),
+            os.path.join(output_dir, "labels", output_subset, sample_name + ".png"),
             FF_CMAP,
         )
 
 
 def main():
-    input_dir = join(DATA_DIR, INPUT_NAME)
-    output_dir = join(DATA_DIR, OUTPUT_NAME)
+    input_dir = os.path.join(DATA_DIR, INPUT_NAME)
+    output_dir = os.path.join(DATA_DIR, OUTPUT_NAME)
     create_dataset_structure(output_dir)
-    preprocess_samples(input_dir, output_dir, "train", "train")
-    preprocess_samples(input_dir, output_dir, "val", "test")
+    preprocess_samples(input_dir, output_dir, input_subset="train", output_subset="train")
+    preprocess_samples(input_dir, output_dir, input_subset="test", output_subset="val")
 
 
 if __name__ == "__main__":
