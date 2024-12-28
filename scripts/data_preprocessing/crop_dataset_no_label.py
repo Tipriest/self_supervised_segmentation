@@ -7,11 +7,9 @@
 ############################################
 # Cropped dataset generation script
 #
-# This script five-crops images from the input dataset and
-# creates a new dataset with the generated crops.
+# This script five-crops images from the input dataset and creates a new dataset with the generated crops.
 # In STEGO, cropping (five-crop) should be performed before KNN generation.
-# Hence, the images should first be cropped with this script,
-# then KNNs should be generated for the new dataset.
+# Hence, the images should first be cropped with this script, then KNNs should be generated for the new dataset.
 #
 # Expected input structure:
 # DATA_DIR
@@ -35,9 +33,9 @@ from preprocessing_utils import create_dataset_structure
 from PIL import Image
 
 
-DATA_DIR = "/home/tipriest/data/TerrainSeg/freiburg_forest"
-INPUT_NAME = "freiburg_forest_preprocessed"
-OUTPUT_NAME = "freiburg_forest_cropped"
+DATA_DIR = "/home/tipriest/data/TerrainSeg/hit_grass"
+INPUT_NAME = "videos_preprocessed/VID_20220502_135318"
+OUTPUT_NAME = "videos_cropped/VID_20220502_135318"
 
 # An image of size HxW will be five-cropped with target size of (CROP_RATIO*H)x(CROP_RATIO*W)
 CROP_RATIO = 0.5
@@ -46,14 +44,6 @@ IMAGE_EXT = ".jpg"
 
 
 def save_five_crop(input_name, output_dir, sample_name, file_ext):
-    """_summary_
-
-    Args:
-        input_name (_type_): _description_
-        output_dir (_type_): _description_
-        sample_name (_type_): _description_
-        file_ext (_type_): _description_
-    """
     output_names = [join(output_dir, sample_name + "_" + str(i) + file_ext) for i in range(5)]
     all_exist = True
     for name in output_names:
@@ -70,14 +60,6 @@ def save_five_crop(input_name, output_dir, sample_name, file_ext):
 
 
 def preprocess_samples(input_dir, output_dir, subset, input_subset):
-    """_summary_
-
-    Args:
-        input_dir (_type_): _description_
-        output_dir (_type_): _description_
-        subset (_type_): _description_
-        input_subset (_type_): _description_
-    """
     print("Processing subset {}".format(subset))
     label_names = os.listdir(join(input_dir, "labels", input_subset))
     for label_name in tqdm(label_names):
@@ -89,7 +71,6 @@ def preprocess_samples(input_dir, output_dir, subset, input_subset):
 
 
 def main():
-    """_summary_"""
     input_dir = join(DATA_DIR, INPUT_NAME)
     output_dir = join(DATA_DIR, OUTPUT_NAME)
     create_dataset_structure(output_dir)

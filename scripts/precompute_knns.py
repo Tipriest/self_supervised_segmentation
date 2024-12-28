@@ -10,7 +10,8 @@
 #
 # This script generates the KNN file for a new dataset to be used with STEGO.
 # Before running the script, preprocess the dataset (including cropping).
-# Adjust the path to the dataset, subsets to be processed and target resolution in cfg/knn_config.yaml
+# Adjust the path to the dataset,
+# subsets to be processed and target resolution in cfg/knn_config.yaml
 #
 ############################################
 
@@ -28,14 +29,24 @@ from tqdm import tqdm
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 grandparent_dir = os.path.dirname(script_dir)
-os.environ['PYTHONPATH'] = grandparent_dir + os.pathsep + os.environ.get('PYTHONPATH', '')
+os.environ["PYTHONPATH"] = grandparent_dir + os.pathsep + os.environ.get("PYTHONPATH", "")
 sys.path.append(grandparent_dir)
+
 from stego.data import ContrastiveSegDataset
 from stego.stego import Stego
 from stego.utils import prep_args, get_transform, get_nn_file_name
 
 
 def get_feats(model, loader):
+    """_summary_
+
+    Args:
+        model (_type_): _description_
+        loader (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     all_feats = []
     for pack in tqdm(loader):
         img = pack["img"]
@@ -46,6 +57,11 @@ def get_feats(model, loader):
 
 @hydra.main(config_path="cfg", config_name="knn_config.yaml")
 def my_app(cfg: DictConfig) -> None:
+    """_summary_
+
+    Args:
+        cfg (DictConfig): _description_
+    """
     print(OmegaConf.to_yaml(cfg))
     seed_everything(seed=0)
     os.makedirs(join(cfg.data_dir, cfg.dataset_name, "nns"), exist_ok=True)
@@ -57,7 +73,13 @@ def my_app(cfg: DictConfig) -> None:
     model = Stego(1).cuda()
 
     for image_set in image_sets:
-        feature_cache_file = get_nn_file_name(cfg.data_dir, cfg.dataset_name, model.backbone.backbone_type, image_set, res)
+        feature_cache_file = get_nn_file_name(
+            cfg.data_dir,
+            cfg.dataset_name,
+            model.backbone.backbone_type,
+            image_set,
+            res,
+        )
         if not os.path.exists(feature_cache_file):
             print("{} not found, computing".format(feature_cache_file))
             dataset = ContrastiveSegDataset(
@@ -92,7 +114,12 @@ def my_app(cfg: DictConfig) -> None:
                 nearest_neighbors = torch.cat(all_nns, dim=0)
 
                 np.savez_compressed(feature_cache_file, nns=nearest_neighbors.numpy())
-                print("Saved NNs", model.backbone.backbone_type, cfg.dataset_name, image_set)
+                print(
+                    "Saved NNs",
+                    model.backbone.backbone_type,
+                    cfg.dataset_name,
+                    image_set,
+                )
 
 
 if __name__ == "__main__":
