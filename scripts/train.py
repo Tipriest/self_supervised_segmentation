@@ -34,7 +34,9 @@ from pytorch_lightning.loggers import WandbLogger
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 grandparent_dir = os.path.dirname(script_dir)
-os.environ['PYTHONPATH'] = grandparent_dir + os.pathsep + os.environ.get('PYTHONPATH', '')
+os.environ["PYTHONPATH"] = (
+    grandparent_dir + os.pathsep + os.environ.get("PYTHONPATH", "")
+)
 sys.path.append(grandparent_dir)
 
 from stego.stego import Stego
@@ -95,7 +97,11 @@ def my_app(cfg: DictConfig) -> None:
         pin_memory=True,
     )
 
-    wandb_logger = WandbLogger(project=cfg.wandb_project, name=cfg.wandb_name, log_model=cfg.wandb_log_model)
+    wandb_logger = WandbLogger(
+        project=cfg.wandb_project,
+        name=cfg.wandb_name,
+        log_model=cfg.wandb_log_model,
+    )
 
     trainer = Trainer(
         logger=wandb_logger,

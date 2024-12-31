@@ -34,7 +34,12 @@ def load_image_to_tensor(
 ):
     img = Image.open(img_path)
     transforms = []
-    if brightness_factor != 1.0 or contrast_factor != 1.0 or saturation_factor != 1.0 or hue_factor != 0.0:
+    if (
+        brightness_factor != 1.0
+        or contrast_factor != 1.0
+        or saturation_factor != 1.0
+        or hue_factor != 0.0
+    ):
         transforms.append(
             T.ColorJitter(
                 brightness=(brightness_factor, brightness_factor),
@@ -44,10 +49,15 @@ def load_image_to_tensor(
             )
         )
     if gaussian_sigma is not None and gaussian_kernel_size is not None:
-        transforms.append(T.GaussianBlur(kernel_size=gaussian_kernel_size, sigma=gaussian_sigma))
+        transforms.append(
+            T.GaussianBlur(
+                kernel_size=gaussian_kernel_size, sigma=gaussian_sigma
+            )
+        )
     elif gaussian_sigma is not None and gaussian_kernel_size is not None:
         raise ValueError(
-            "Both sigma and kernel size for gaussian blur augmentation need to be None or specified, but exactly one was specified."
+            "Both sigma and kernel size for gaussian blur augmentation\
+                need to be None or specified, but exactly one was specified."
         )
     transforms.append(get_transform(resolution, False, "center"))
     preprocess_transform = T.Compose(transforms)
@@ -60,7 +70,7 @@ def get_nn_file_name(data_dir, dataset_name, model_type, image_set, resolution):
         data_dir,
         dataset_name,
         "nns",
-        "nns_{}_{}_{}.npz".format(model_type, image_set, resolution),
+        f"nns_{model_type}_{image_set}_{resolution}.npz",
     )
 
 
@@ -90,7 +100,7 @@ def get_transform(res, is_label, crop_type, is_tensor=False, do_normalize=True):
         cropper = T.Lambda(lambda x: x)
         res = (res, res)
     else:
-        raise ValueError("Unknown Cropper {}".format(crop_type))
+        raise ValueError(f"Unknown Cropper {crop_type}")
     transform = [T.Resize(res, T.InterpolationMode.NEAREST), cropper]
 
     if is_label:
@@ -118,20 +128,30 @@ def norm(t):
 
 
 def sample(t: torch.Tensor, coords: torch.Tensor):
-    return F.grid_sample(t, coords.permute(0, 2, 1, 3), padding_mode="border", align_corners=True)
+    return F.grid_sample(
+        t, coords.permute(0, 2, 1, 3), padding_mode="border", align_corners=True
+    )
 
 
 def sample_nonzero_locations(t, target_size):
     nonzeros = torch.nonzero(t)
-    coords = torch.zeros(target_size, dtype=nonzeros.dtype, device=nonzeros.device)
+    coords = torch.zeros(
+        target_size, dtype=nonzeros.dtype, device=nonzeros.device
+    )
     n = target_size[1] * target_size[2]
     for i in range(t.shape[0]):
         selected_nonzeros = nonzeros[nonzeros[:, 0] == i]
         if selected_nonzeros.shape[0] == 0:
-            selected_coords = torch.randint(t.shape[1], size=(n, 2), device=nonzeros.device)
+            selected_coords = torch.randint(
+                t.shape[1], size=(n, 2), device=nonzeros.device
+            )
         else:
-            selected_coords = selected_nonzeros[torch.randint(len(selected_nonzeros), size=(n,)), 1:]
-        coords[i, :, :, :] = selected_coords.reshape(target_size[1], target_size[2], 2)
+            selected_coords = selected_nonzeros[
+                torch.randint(len(selected_nonzeros), size=(n,)), 1:
+            ]
+        coords[i, :, :, :] = selected_coords.reshape(
+            target_size[1], target_size[2], 2
+        )
     coords = coords.to(torch.float32) / t.shape[1]
     coords = coords * 2 - 1
     return torch.flip(coords, dims=[-1])
@@ -154,7 +174,7 @@ def prep_args():
         elif arg.startswith("--"):
             new_args.append(arg[2:] + "=" + old_args.pop(0))
         else:
-            raise ValueError("Unexpected arg style {}".format(arg))
+            raise ValueError(f"Unexpected arg style {arg}")
     sys.argv = new_args
 
 
@@ -183,7 +203,9 @@ def prep_for_plot(img, rescale=True, resize=None):
 
     plot_img = unnorm(img).squeeze(0).cpu().permute(1, 2, 0)
     if rescale:
-        plot_img = (plot_img - plot_img.min()) / (plot_img.max() - plot_img.min())
+        plot_img = (plot_img - plot_img.min()) / (
+            plot_img.max() - plot_img.min()
+        )
     return plot_img
 
 
@@ -191,14 +213,16 @@ def plot_distributions(value_lists, n_bins, names, x_name, output_file):
     plt.clf()
     plt.xlabel(x_name)
     plt.ylabel("Frequency")
-    plt.title("Distribution of {}".format(x_name))
+    plt.title(f"Distribution of {x_name}")
     for i, values in enumerate(value_lists):
         if len(values) == 0:
             continue
         values_np = np.array(values)
         hist, bin_edges = np.histogram(
             values_np,
-            bins=np.linspace(np.min(values_np), np.max(values_np), num=n_bins + 1),
+            bins=np.linspace(
+                np.min(values_np), np.max(values_np), num=n_bins + 1
+            ),
             density=True,
         )
         x = (bin_edges[:-1] + bin_edges[1:]) / 2
@@ -227,7 +251,9 @@ class UnsupervisedMetrics(Metric):
         self.prefix = prefix
         self.add_state(
             "stats",
-            default=torch.zeros(n_classes + self.extra_clusters, n_classes, dtype=torch.int64),
+            default=torch.zeros(
+                n_classes + self.extra_clusters, n_classes, dtype=torch.int64
+            ),
             dist_reduce_fx="sum",
         )
 
@@ -246,7 +272,8 @@ class UnsupervisedMetrics(Metric):
             self.stats += (
                 torch.bincount(
                     (self.n_classes + self.extra_clusters) * actual + preds,
-                    minlength=self.n_classes * (self.n_classes + self.extra_clusters),
+                    minlength=self.n_classes
+                    * (self.n_classes + self.extra_clusters),
                 )
                 .reshape(self.n_classes, self.n_classes + self.extra_clusters)
                 .t()
@@ -257,28 +284,44 @@ class UnsupervisedMetrics(Metric):
         if self.extra_clusters == 0:
             return torch.tensor(self.assignments[1])[clusters]
         else:
-            missing = sorted(list(set(range(self.n_classes + self.extra_clusters)) - set(self.assignments[0])))
+            missing = sorted(
+                list(
+                    set(range(self.n_classes + self.extra_clusters))
+                    - set(self.assignments[0])
+                )
+            )
             cluster_to_class = self.assignments[1]
             for missing_entry in missing:
                 if missing_entry == cluster_to_class.shape[0]:
                     cluster_to_class = np.append(cluster_to_class, -1)
                 else:
-                    cluster_to_class = np.insert(cluster_to_class, missing_entry + 1, -1)
+                    cluster_to_class = np.insert(
+                        cluster_to_class, missing_entry + 1, -1
+                    )
             cluster_to_class = torch.tensor(cluster_to_class)
             return cluster_to_class[clusters]
 
     def compute(self):
         if self.compute_hungarian:
-            self.assignments = linear_sum_assignment(self.stats.detach().cpu(), maximize=True)
+            self.assignments = linear_sum_assignment(
+                self.stats.detach().cpu(), maximize=True
+            )
             if self.extra_clusters == 0:
                 self.histogram = self.stats[np.argsort(self.assignments[1]), :]
             if self.extra_clusters > 0:
-                self.assignments_t = linear_sum_assignment(self.stats.detach().cpu().t(), maximize=True)
+                self.assignments_t = linear_sum_assignment(
+                    self.stats.detach().cpu().t(), maximize=True
+                )
                 histogram = self.stats[self.assignments_t[1], :]
-                missing = list(set(range(self.n_classes + self.extra_clusters)) - set(self.assignments[0]))
+                missing = list(
+                    set(range(self.n_classes + self.extra_clusters))
+                    - set(self.assignments[0])
+                )
                 new_row = self.stats[missing, :].sum(0, keepdim=True)
                 histogram = torch.cat([histogram, new_row], axis=0)
-                new_col = torch.zeros(self.n_classes + 1, 1, device=histogram.device)
+                new_col = torch.zeros(
+                    self.n_classes + 1, 1, device=histogram.device
+                )
                 self.histogram = torch.cat([histogram, new_col], axis=1)
         else:
             self.assignments = (
@@ -319,7 +362,11 @@ class WVNMetrics(Metric):
         if save_plots:
             self.output_dir = output_dir
         # TN, FP, FN, TP for the traversable class (1)
-        self.add_state("stats", default=torch.zeros(4, dtype=torch.int64), dist_reduce_fx="sum")
+        self.add_state(
+            "stats",
+            default=torch.zeros(4, dtype=torch.int64),
+            dist_reduce_fx="sum",
+        )
         self.add_state("feature_var", default=[], dist_reduce_fx="cat")
         self.add_state("code_var", default=[], dist_reduce_fx="cat")
         self.add_state("avg_n_clusters", default=[], dist_reduce_fx="cat")
@@ -337,39 +384,53 @@ class WVNMetrics(Metric):
             actual = target.reshape(-1)
             pred_clusters = clusters.reshape(-1)
             preds = self.assign_pred_to_clusters(pred_clusters, actual)
-            self.stats += torch.bincount(2 * actual + preds, minlength=4).to(self.stats.device)
+            self.stats += torch.bincount(2 * actual + preds, minlength=4).to(
+                self.stats.device
+            )
             cluster_count = torch.unique(pred_clusters).size(0)
             self.avg_n_clusters.append(cluster_count)
             self.time.append(time)
             if features is not None:
-                self.feature_var.extend(self.update_variance(clusters, features))
+                self.feature_var.extend(
+                    self.update_variance(clusters, features)
+                )
             if code is not None:
                 self.code_var.extend(self.update_variance(clusters, code))
 
     def update_variance(self, clusters: torch.Tensor, features: torch.Tensor):
-        upsampled_features = F.interpolate(features, clusters.shape[-2:], mode="bilinear", align_corners=False).permute(
-            0, 2, 3, 1
-        )
+        upsampled_features = F.interpolate(
+            features, clusters.shape[-2:], mode="bilinear", align_corners=False
+        ).permute(0, 2, 3, 1)
         mean_feature_vars = []
         for i in range(self.n_clusters):
             mask = clusters == i
             if mask.shape[0] != 1:
                 mask = mask.unsqueeze(0)
-            cluster_features = upsampled_features[mask].reshape(-1, upsampled_features.shape[-1])
+            cluster_features = upsampled_features[mask].reshape(
+                -1, upsampled_features.shape[-1]
+            )
             if cluster_features.shape[0] > 1:
-                mean_feature_vars.append(torch.mean(torch.var(cluster_features, dim=0)).item())
+                mean_feature_vars.append(
+                    torch.mean(torch.var(cluster_features, dim=0)).item()
+                )
         return mean_feature_vars
 
-    def assign_pred_to_clusters(self, clusters: torch.Tensor, target: torch.Tensor):
+    def assign_pred_to_clusters(
+        self, clusters: torch.Tensor, target: torch.Tensor
+    ):
         counts = torch.zeros(2, self.n_clusters, dtype=torch.int64)
         for i in range(2):
             mask = target == i
-            counts[i] = torch.bincount(clusters[mask], minlength=self.n_clusters)
+            counts[i] = torch.bincount(
+                clusters[mask], minlength=self.n_clusters
+            )
         cluster_pred = torch.where(counts[0] > counts[1], 0, 1)
         pred = cluster_pred[clusters.long()]
         return pred
 
-    def compute_list_metric(self, metric_name, values, metric_dict, print_metrics=False):
+    def compute_list_metric(
+        self, metric_name, values, metric_dict, print_metrics=False
+    ):
         if len(values) == 0:
             return
         value = np.mean(np.array(values))
@@ -382,7 +443,9 @@ class WVNMetrics(Metric):
                 100,
                 [self.prefix],
                 metric_name,
-                os.path.join(self.output_dir, self.prefix + "_" + metric_name + ".png"),
+                os.path.join(
+                    self.output_dir, self.prefix + "_" + metric_name + ".png"
+                ),
             )
 
     def compute(self, print_metrics=False):
@@ -404,9 +467,15 @@ class WVNMetrics(Metric):
             print("\tIoU: {}".format(iou.item()))
             print("\tAccuracy: {}".format(acc.item()))
 
-        self.compute_list_metric("Avg_clusters", self.avg_n_clusters, metric_dict, print_metrics)
-        self.compute_list_metric("Feature_var", self.feature_var, metric_dict, print_metrics)
-        self.compute_list_metric("Code_var", self.code_var, metric_dict, print_metrics)
+        self.compute_list_metric(
+            "Avg_clusters", self.avg_n_clusters, metric_dict, print_metrics
+        )
+        self.compute_list_metric(
+            "Feature_var", self.feature_var, metric_dict, print_metrics
+        )
+        self.compute_list_metric(
+            "Code_var", self.code_var, metric_dict, print_metrics
+        )
         self.compute_list_metric("Time", self.time, metric_dict, print_metrics)
 
         values_dict = {
@@ -436,11 +505,17 @@ def flexible_collate(batch):
             return torch.stack(batch, 0, out=out)
         except RuntimeError:
             return batch
-    elif elem_type.__module__ == "numpy" and elem_type.__name__ != "str_" and elem_type.__name__ != "string_":
+    elif (
+        elem_type.__module__ == "numpy"
+        and elem_type.__name__ != "str_"
+        and elem_type.__name__ != "string_"
+    ):
         if elem_type.__name__ == "ndarray" or elem_type.__name__ == "memmap":
             # array of string classes and object
             if np_str_obj_array_pattern.search(elem.dtype.str) is not None:
-                raise TypeError(default_collate_err_msg_format.format(elem.dtype))
+                raise TypeError(
+                    default_collate_err_msg_format.format(elem.dtype)
+                )
 
             return flexible_collate([torch.as_tensor(b) for b in batch])
         elif elem.shape == ():  # scalars
@@ -454,13 +529,17 @@ def flexible_collate(batch):
     elif isinstance(elem, collections.abc.Mapping):
         return {key: flexible_collate([d[key] for d in batch]) for key in elem}
     elif isinstance(elem, tuple) and hasattr(elem, "_fields"):  # namedtuple
-        return elem_type(*(flexible_collate(samples) for samples in zip(*batch)))
+        return elem_type(
+            *(flexible_collate(samples) for samples in zip(*batch))
+        )
     elif isinstance(elem, collections.abc.Sequence):
         # check to make sure that the elements in batch have consistent size
         it = iter(batch)
         elem_size = len(next(it))
         if not all(len(elem) == elem_size for elem in it):
-            raise RuntimeError("each element in list of batch should be of equal size")
+            raise RuntimeError(
+                "each element in list of batch should be of equal size"
+            )
         transposed = zip(*batch)
         return [flexible_collate(samples) for samples in transposed]
 

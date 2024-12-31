@@ -1,6 +1,7 @@
 # Backbone parameters
 backbone: "dino"
 backbone_type: "vit_base"
+# dinov2 指定patch_size=14
 patch_size: 8
 dropout_p: 0.1 # Dropout probability on backbone output, clamped to [0,1]. For training, STEGO used 0.1.
 pretrained_weights: 

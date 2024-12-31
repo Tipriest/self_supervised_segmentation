@@ -5,13 +5,13 @@
 # See LICENSE file in the project root for details.
 #
 #
-import torch
-import numpy as np
-from PIL import Image
-import random
-from torch.utils.data import Dataset
 import os
+import random
+import numpy as np
+import torch
 
+from PIL import Image
+from torch.utils.data import Dataset
 from stego.utils import get_nn_file_name
 
 
@@ -27,7 +27,9 @@ class UnlabeledImageFolder(Dataset):
         self.images = os.listdir(self.root)
 
     def __getitem__(self, index):
-        image = Image.open(os.path.join(self.root, self.images[index])).convert("RGB")
+        image = Image.open(os.path.join(self.root, self.images[index])).convert(
+            "RGB"
+        )
         seed = np.random.randint(2147483647)
         random.seed(seed)
         torch.manual_seed(seed)
@@ -84,11 +86,16 @@ class DirectoryDataset(Dataset):
         |-- labels
             |-- image_set
 
-    If available, file names in labels/image_set should be the same as file names in imgs/image_set (excluding extensions).
-    If labels are not available (there is no labels folder) this class returns zero arrays of shape corresponding to the image shape.
+    If available, file names in labels/image_set should be the same as file names
+    in imgs/image_set (excluding extensions).
+
+    If labels are not available (there is no labels folder) this class returns
+    zero arrays of shape corresponding to the image shape.
     """
 
-    def __init__(self, data_dir, dataset_name, image_set, transform, target_transform):
+    def __init__(
+        self, data_dir, dataset_name, image_set, transform, target_transform
+    ):
         super(DirectoryDataset, self).__init__()
         self.split = image_set
         self.dataset_name = dataset_name
@@ -100,14 +107,16 @@ class DirectoryDataset(Dataset):
         self.target_transform = target_transform
 
         self.img_files = np.array(sorted(os.listdir(self.img_dir)))
-        assert len(self.img_files) > 0, "Could not find any images in dataset directory {}".format(self.img_dir)
+        assert (
+            len(self.img_files) > 0
+        ), f"Could not find any images in dataset directory {self.img_dir}"
         if os.path.exists(os.path.join(self.dir, "labels")):
             self.label_files = np.array(sorted(os.listdir(self.label_dir)))
             assert len(self.img_files) == len(
                 self.label_files
-            ), "The {} dataset contains a different number of images and labels: {} images and {} labels".format(
-                self.dataset_name, len(self.img_files), len(self.label_files)
-            )
+            ), f"The {self.dataset_name} dataset contains a different number\
+                of images and labels:\
+                    {len(self.img_files)} images and {len(self.label_files)} labels"
         else:
             self.label_files = None
 
@@ -140,8 +149,10 @@ class ContrastiveSegDataset(Dataset):
     """
     The main Dataset class used by STEGO.
     Internally uses the DirectoryDataset class to load images.
-    Additionally, this class uses the precomputed Nearest Neighbor files to extract the knn corresponding image for STEGO training.
-    It returns a dictionary containing an image and its positive pair (one of the nearest neighbor images).
+    Additionally, this class uses the precomputed Nearest Neighbor files
+    to extract the knn corresponding image for STEGO training.
+    It returns a dictionary containing an image and its positive pair
+    (one of the nearest neighbor images).
     """
 
     def __init__(
@@ -172,18 +183,25 @@ class ContrastiveSegDataset(Dataset):
         self.aug_geometric_transform = aug_geometric_transform
         self.aug_photometric_transform = aug_photometric_transform
 
-        self.dataset = DirectoryDataset(data_dir, dataset_name, image_set, transform, target_transform)
+        self.dataset = DirectoryDataset(
+            data_dir, dataset_name, image_set, transform, target_transform
+        )
 
-        feature_cache_file = get_nn_file_name(data_dir, dataset_name, model_type, image_set, resolution)
+        feature_cache_file = get_nn_file_name(
+            data_dir, dataset_name, model_type, image_set, resolution
+        )
         if pos_labels or pos_images:
             if not os.path.exists(feature_cache_file):
-                raise ValueError("could not find nn file {} please run precompute_knns".format(feature_cache_file))
+                raise ValueError(
+                    f"could not find nn file {feature_cache_file} please run precompute_knns"
+                )
             else:
                 loaded = np.load(feature_cache_file)
                 self.nns = loaded["nns"]
             assert (
                 len(self.dataset) == self.nns.shape[0]
-            ), "Found different numbers of images in dataset {} and nn file {}".format(dataset_name, feature_cache_file)
+            ), "Found different numbers of images in\
+                dataset {dataset_name} and nn file {feature_cache_file}"
 
     def __len__(self):
         return len(self.dataset)
@@ -196,7 +214,11 @@ class ContrastiveSegDataset(Dataset):
         pack = self.dataset[ind]
 
         if self.pos_images or self.pos_labels:
-            ind_pos = self.nns[ind][torch.randint(low=1, high=self.num_neighbors + 1, size=[]).item()]
+            ind_pos = self.nns[ind][
+                torch.randint(
+                    low=1, high=self.num_neighbors + 1, size=[]
+                ).item()
+            ]
             pack_pos = self.dataset[ind_pos]
 
         seed = np.random.randint(2147483647)  # make a seed with numpy generator
@@ -233,7 +255,9 @@ class ContrastiveSegDataset(Dataset):
             ret["mask_pos"] = pack_pos[2]
 
         if self.aug_photometric_transform is not None:
-            img_aug = self.aug_photometric_transform(self.aug_geometric_transform(pack[0]))
+            img_aug = self.aug_photometric_transform(
+                self.aug_geometric_transform(pack[0])
+            )
 
             self._set_seed(seed)
             coord_aug = self.aug_geometric_transform(coord)
