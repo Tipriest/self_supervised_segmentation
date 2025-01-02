@@ -25,7 +25,9 @@ class SegmentationHead(nn.Module):
 
     def __init__(self, input_dim, dim):
         super().__init__()
-        self.linear = torch.nn.Sequential(torch.nn.Conv2d(input_dim, dim, (1, 1)))
+        self.linear = torch.nn.Sequential(
+            torch.nn.Conv2d(input_dim, dim, (1, 1))
+        )
         self.nonlinear = torch.nn.Sequential(
             torch.nn.Conv2d(input_dim, input_dim, (1, 1)),
             torch.nn.ReLU(),
@@ -55,11 +57,15 @@ class ClusterLookup(nn.Module):
     def forward(self, x, alpha, log_probs=False):
         normed_clusters = F.normalize(self.clusters, dim=1)
         normed_features = F.normalize(x, dim=1)
-        inner_products = torch.einsum("bchw,nc->bnhw", normed_features, normed_clusters)
+        inner_products = torch.einsum(
+            "bchw,nc->bnhw", normed_features, normed_clusters
+        )
 
         if alpha is None:
             cluster_probs = (
-                F.one_hot(torch.argmax(inner_products, dim=1), self.clusters.shape[0])
+                F.one_hot(
+                    torch.argmax(inner_products, dim=1), self.clusters.shape[0]
+                )
                 .permute(0, 3, 1, 2)
                 .to(torch.float32)
             )
@@ -135,8 +141,12 @@ class ContrastiveCorrelationLoss(nn.Module):
         feats_pos = sample(orig_feats_pos, coords2)
         code_pos = sample(orig_code_pos, coords2)
 
-        pos_intra_loss, pos_intra_cd = self.helper(feats, feats, code, code, self.cfg.pos_intra_shift)
-        pos_inter_loss, pos_inter_cd = self.helper(feats, feats_pos, code, code_pos, self.cfg.pos_inter_shift)
+        pos_intra_loss, pos_intra_cd = self.helper(
+            feats, feats, code, code, self.cfg.pos_intra_shift
+        )
+        pos_inter_loss, pos_inter_cd = self.helper(
+            feats, feats_pos, code, code_pos, self.cfg.pos_inter_shift
+        )
 
         neg_losses = []
         neg_cds = []
@@ -144,7 +154,9 @@ class ContrastiveCorrelationLoss(nn.Module):
             perm_neg = super_perm(orig_feats.shape[0], orig_feats.device)
             feats_neg = sample(orig_feats[perm_neg], coords2)
             code_neg = sample(orig_code[perm_neg], coords2)
-            neg_inter_loss, neg_inter_cd = self.helper(feats, feats_neg, code, code_neg, self.cfg.neg_inter_shift)
+            neg_inter_loss, neg_inter_cd = self.helper(
+                feats, feats_neg, code, code_neg, self.cfg.neg_inter_shift
+            )
             neg_losses.append(neg_inter_loss)
             neg_cds.append(neg_inter_cd)
         neg_inter_loss = torch.cat(neg_losses, axis=0)
@@ -168,7 +180,9 @@ class CRF:
     def __init__(self, cfg):
         self.cfg = cfg
 
-    def dense_crf(self, image_tensor: torch.FloatTensor, output_logits: torch.FloatTensor) -> torch.FloatTensor:
+    def dense_crf(
+        self, image_tensor: torch.FloatTensor, output_logits: torch.FloatTensor
+    ) -> torch.FloatTensor:
         image = np.array(VF.to_pil_image(unnorm(image_tensor)))[:, :, ::-1]
         H, W = image.shape[:2]
         image = np.ascontiguousarray(image)
@@ -263,7 +277,9 @@ class KMeans:
         )
         return self.final_cluster_assignments
 
-    def _initialise_cluster_centers(self, X: Tensor, num_clusters: int) -> Tensor:
+    def _initialise_cluster_centers(
+        self, X: Tensor, num_clusters: int
+    ) -> Tensor:
         """Chooses num_cluster points from X as the initial cluster centers.
 
         Args:
@@ -279,7 +295,9 @@ class KMeans:
         initial_state = X[idx]
         return initial_state
 
-    def _pairwise_euclidean_distance(self, data1: Tensor, data2: Tensor) -> Tensor:
+    def _pairwise_euclidean_distance(
+        self, data1: Tensor, data2: Tensor
+    ) -> Tensor:
         """Computes pairwise distance between 2 sets of vectors.
 
         Args:
@@ -323,7 +341,9 @@ class KMeans:
         KORNIA_CHECK_SHAPE(X, ["N", "D"])
 
         if self.cluster_centers is None:
-            self.cluster_centers = self._initialise_cluster_centers(X, self.num_clusters)
+            self.cluster_centers = self._initialise_cluster_centers(
+                X, self.num_clusters
+            )
         else:
             # X and cluster_centers should have same number of columns
             KORNIA_CHECK(
@@ -345,20 +365,28 @@ class KMeans:
 
             previous_centers = current_centers.clone()
 
-            one_hot_assignments = torch.nn.functional.one_hot(cluster_assignment, self.num_clusters).float()
+            one_hot_assignments = torch.nn.functional.one_hot(
+                cluster_assignment, self.num_clusters
+            ).float()
             sum_points = torch.mm(one_hot_assignments.T, X)
             num_points = one_hot_assignments.sum(0).unsqueeze(1)
 
             # Handle empty clusters by replacing them with a random point
             empty_clusters = num_points.squeeze() == 0
-            random_points = X[torch.randint(len(X), (torch.sum(empty_clusters),))]
+            random_points = X[
+                torch.randint(len(X), (torch.sum(empty_clusters),))
+            ]
             sum_points[empty_clusters, :] = random_points
             num_points[empty_clusters] = 1
 
             current_centers = sum_points / num_points
 
             # sum of distance of how much the newly computed clusters have moved from their previous positions
-            center_shift = torch.sum(torch.sqrt(torch.sum((current_centers - previous_centers) ** 2, dim=1)))
+            center_shift = torch.sum(
+                torch.sqrt(
+                    torch.sum((current_centers - previous_centers) ** 2, dim=1)
+                )
+            )
 
             iteration = iteration + 1
 

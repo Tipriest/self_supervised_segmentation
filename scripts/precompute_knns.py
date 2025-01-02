@@ -20,9 +20,9 @@ import sys
 from os.path import join
 
 # from typing import Any
-import torch
 import hydra
 import numpy as np
+import torch
 import torch.multiprocessing
 import torch.nn.functional as F
 from omegaconf import DictConfig, OmegaConf

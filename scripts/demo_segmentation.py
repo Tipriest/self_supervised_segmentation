@@ -17,15 +17,21 @@
 #
 ############################################
 
-
+import os, sys
 import hydra
 import torch.multiprocessing
 from PIL import Image
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import os
 import numpy as np
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+grandparent_dir = os.path.dirname(script_dir)
+os.environ["PYTHONPATH"] = (
+    grandparent_dir + os.pathsep + os.environ.get("PYTHONPATH", "")
+)
+sys.path.append(grandparent_dir)
 
 from stego.utils import prep_args, flexible_collate, get_transform
 from stego.data import UnlabeledImageFolder, create_cityscapes_colormap
@@ -75,8 +81,11 @@ def my_app(cfg: DictConfig) -> None:
             linear_crf = linear_crf.cpu()
             for j in range(img.shape[0]):
                 new_name = ".".join(name[j].split(".")[:-1]) + ".png"
-                Image.fromarray(cmap[linear_crf[j]].astype(np.uint8)).save(os.path.join(result_dir, "linear", new_name))
-                Image.fromarray(cmap[cluster_crf[j]].astype(np.uint8)).save(
+                Image.fromarray(cmap[linear_crf[j]].astype(np.uint8)).save(
+                    os.path.join(result_dir, "linear", new_name)
+                )
+                cluster_pic = cmap[cluster_crf[j]].astype(np.uint8)
+                Image.fromarray(cluster_pic).save(
                     os.path.join(result_dir, "cluster", new_name)
                 )
 

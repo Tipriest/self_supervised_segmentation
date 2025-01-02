@@ -1,22 +1,52 @@
-data_dir: "/home/tipriest/data/TerrainSeg/freiburg_forest"
-dataset_name: "freiburg_forest_cropped"
+# data_dir: "/home/tipriest/data/TerrainSeg/freiburg_forest"
+# dataset_name: "freiburg_forest_cropped"
+
+# # Output directory to save the trained checkpoints during training
+# checkpoint_dir: "/home/tipriest/data/TerrainSeg/freiburg_forest/models"
+# # (Optional) Checkpoint path to initialize the training
+# # model_path: "/home/tipriest/data/TerrainSeg/models/epoch=5-step=4800.ckpt"
+# model_path: ""
+
+# resolution: 224
+# num_classes: 24
+
+# num_workers: 24
+# batch_size: 96
+
+# scalar_log_freq: 1
+# max_steps: 8000
+# val_check_interval: 10
+
+# num_neighbors: 5
+
+# # Reset the cluster and linear probes of the loaded model. If True, cluster and linear probes will be reset with n_classes and extra_clusters given in this file
+# reset_clusters: True
+# extra_clusters: 0
+
+# # WandB
+# wandb_project: "stego"
+# wandb_name: "freiburg_forest"
+# wandb_log_model: "all"
+
+
+data_dir: "/home/tipriest/data/TerrainSeg/hit_grass/videos_preprocessed"
+dataset_name: "VID_20220502_135318"
 
 # Output directory to save the trained checkpoints during training
-checkpoint_dir: "/home/tipriest/data/TerrainSeg/models"
+checkpoint_dir: "/home/tipriest/data/TerrainSeg/hit_grass/models"
 # (Optional) Checkpoint path to initialize the training
 # model_path: "/home/tipriest/data/TerrainSeg/models/epoch=5-step=4800.ckpt"
 model_path: ""
 
-
 resolution: 224
 num_classes: 24
 
-num_workers: 24
-batch_size: 96
+num_workers: 7
+batch_size: 32
 
 scalar_log_freq: 1
-max_steps: 8000
-val_check_interval: 10
+max_steps: 1000
+val_check_interval: 7
 
 num_neighbors: 5
 
@@ -26,5 +56,5 @@ extra_clusters: 0
 
 # WandB
 wandb_project: "stego"
-wandb_name: "freiburg_forest"
+wandb_name: "VID_20220502_135318"
 wandb_log_model: "all"

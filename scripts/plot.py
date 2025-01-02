@@ -43,7 +43,7 @@ from stego.utils import (
     tensor_correlation,
     prep_for_plot,
     load_image_to_tensor,
-    norm
+    norm,
 )
 
 
@@ -66,7 +66,9 @@ class Plotter:
         axes[1].set_title("Feature Cosine Similarity", fontsize=20)
         axes[2].set_title("Image B", fontsize=20)
 
-    def get_heatmaps(self, img, img_pos, query_points, zero_mean=True, zero_clamp=True):
+    def get_heatmaps(
+        self, img, img_pos, query_points, zero_mean=True, zero_clamp=True
+    ):
         """
         Runs STEGO on the given pair of images (img, img_pos)
         Generates a 2D heatmap of cosine similarities between STEGO's backbone features
@@ -77,7 +79,11 @@ class Plotter:
 
         sfeats1 = sample(feats1, query_points)
 
-        attn_intra = torch.einsum("nchw,ncij->nhwij", F.normalize(sfeats1, dim=1), F.normalize(feats1, dim=1))
+        attn_intra = torch.einsum(
+            "nchw,ncij->nhwij",
+            F.normalize(sfeats1, dim=1),
+            F.normalize(feats1, dim=1),
+        )
         if zero_mean:
             attn_intra -= attn_intra.mean([3, 4], keepdims=True)
         if zero_clamp:
@@ -85,7 +91,11 @@ class Plotter:
         else:
             attn_intra = attn_intra.squeeze(0)
 
-        attn_inter = torch.einsum("nchw,ncij->nhwij", F.normalize(sfeats1, dim=1), F.normalize(feats2, dim=1))
+        attn_inter = torch.einsum(
+            "nchw,ncij->nhwij",
+            F.normalize(sfeats1, dim=1),
+            F.normalize(feats2, dim=1),
+        )
         if zero_mean:
             attn_inter -= attn_inter.mean([3, 4], keepdims=True)
         if zero_clamp:
@@ -94,10 +104,23 @@ class Plotter:
             attn_inter = attn_inter.squeeze(0)
 
         heatmap_intra = (
-            F.interpolate(attn_intra, img.shape[2:], mode="bilinear", align_corners=True).squeeze(0).detach().cpu()
+            F.interpolate(
+                attn_intra, img.shape[2:], mode="bilinear", align_corners=True
+            )
+            .squeeze(0)
+            .detach()
+            .cpu()
         )
         heatmap_inter = (
-            F.interpolate(attn_inter, img_pos.shape[2:], mode="bilinear", align_corners=True).squeeze(0).detach().cpu()
+            F.interpolate(
+                attn_inter,
+                img_pos.shape[2:],
+                mode="bilinear",
+                align_corners=True,
+            )
+            .squeeze(0)
+            .detach()
+            .cpu()
         )
 
         return heatmap_intra, heatmap_inter
@@ -113,11 +136,15 @@ class Plotter:
             zero_mean=self.cfg.zero_mean,
             zero_clamp=self.cfg.zero_clamp,
         )
-        point = ((query_point[0, 0, 0] + 1) / 2 * self.cfg.display_resolution).cpu()
+        point = (
+            (query_point[0, 0, 0] + 1) / 2 * self.cfg.display_resolution
+        ).cpu()
         self.reset_axes(axes)
         axes[0].imshow(prep_for_plot(img_a[0], rescale=False))
         axes[2].imshow(prep_for_plot(img_b[0], rescale=False))
-        axes[0].scatter(point[0], point[1], color=(1, 0, 0), marker="x", s=500, linewidths=5)
+        axes[0].scatter(
+            point[0], point[1], color=(1, 0, 0), marker="x", s=500, linewidths=5
+        )
 
         img_b_bw = prep_for_plot(img_b[0], rescale=False) * 0.8
         img_b_bw = np.ones_like(img_b_bw) * np.expand_dims(
@@ -153,7 +180,9 @@ class Plotter:
         """
         Plots the interactive correspondence figure and updates according to user input.
         """
-        img_a = load_image_to_tensor(self.cfg.image_a_path, self.cfg.display_resolution)
+        img_a = load_image_to_tensor(
+            self.cfg.image_a_path, self.cfg.display_resolution
+        )
         image_b_path = self.cfg.image_b_path
         if image_b_path is None:
             image_b_path = self.cfg.image_a_path
@@ -174,9 +203,15 @@ class Plotter:
 
         def onclick(event):
             if event.xdata is not None and event.ydata is not None:
-                x = (event.xdata - self.cfg.display_resolution / 2) / (self.cfg.display_resolution / 2)
-                y = (event.ydata - self.cfg.display_resolution / 2) / (self.cfg.display_resolution / 2)
-                query_point = torch.tensor([[x, y]]).float().reshape(1, 1, 1, 2).cuda()
+                x = (event.xdata - self.cfg.display_resolution / 2) / (
+                    self.cfg.display_resolution / 2
+                )
+                y = (event.ydata - self.cfg.display_resolution / 2) / (
+                    self.cfg.display_resolution / 2
+                )
+                query_point = (
+                    torch.tensor([[x, y]]).float().reshape(1, 1, 1, 2).cuda()
+                )
                 self.plot_figure(img_a, img_b, query_point, axes, fig)
 
         fig.canvas.mpl_connect("button_press_event", onclick)
@@ -189,11 +224,15 @@ class Plotter:
             feat_samples1 = sample(feats1, coords1)
             feat_samples2 = sample(feats2, coords2)
             label_samples1 = sample(
-                F.one_hot(label1 + 1, self.n_classes + 1).to(torch.float).permute(0, 3, 1, 2),
+                F.one_hot(label1 + 1, self.n_classes + 1)
+                .to(torch.float)
+                .permute(0, 3, 1, 2),
                 coords1,
             )
             label_samples2 = sample(
-                F.one_hot(label2 + 1, self.n_classes + 1).to(torch.float).permute(0, 3, 1, 2),
+                F.one_hot(label2 + 1, self.n_classes + 1)
+                .to(torch.float)
+                .permute(0, 3, 1, 2),
                 coords2,
             )
             fd = tensor_correlation(norm(feat_samples1), norm(feat_samples2))
@@ -245,15 +284,23 @@ class Plotter:
                 data_dir=self.cfg.data_dir,
                 dataset_name=self.cfg.dataset_name,
                 image_set="val",
-                transform=get_transform(self.cfg.pr_resolution, False, val_loader_crop),
-                target_transform=get_transform(self.cfg.pr_resolution, True, val_loader_crop),
+                transform=get_transform(
+                    self.cfg.pr_resolution, False, val_loader_crop
+                ),
+                target_transform=get_transform(
+                    self.cfg.pr_resolution, True, val_loader_crop
+                ),
                 model_type=self.stego.backbone_name,
                 resolution=self.cfg.pr_resolution,
                 mask=True,
                 pos_images=True,
                 pos_labels=True,
             )
-            print("Calculating PR curves for {} with model {}".format(self.cfg.dataset_name, self.cfg.model_path))
+            print(
+                "Calculating PR curves for {} with model {}".format(
+                    self.cfg.dataset_name, self.cfg.model_path
+                )
+            )
             lds = []
             backbone_fds = []
             stego_fds = []
@@ -269,8 +316,12 @@ class Plotter:
                 ]
                 coords1 = torch.rand(coord_shape, device=img.device) * 2 - 1
                 coords2 = torch.rand(coord_shape, device=img.device) * 2 - 1
-                ld, stego_fd, _, _ = self.get_net_fd(code, code, label, label, coords1, coords2)
-                ld, backbone_fd, _, _ = self.get_net_fd(feats, feats, label, label, coords1, coords2)
+                ld, stego_fd, _, _ = self.get_net_fd(
+                    code, code, label, label, coords1, coords2
+                )
+                ld, backbone_fd, _, _ = self.get_net_fd(
+                    feats, feats, label, label, coords1, coords2
+                )
                 lds.append(ld)
                 backbone_fds.append(backbone_fd)
                 stego_fds.append(stego_fd)
@@ -280,14 +331,20 @@ class Plotter:
             if self.cfg.plot_stego_pr:
                 self.generate_pr_plot(self.prep_fd(stego_fd), ld, "Stego")
             if self.cfg.plot_backbone_pr:
-                self.generate_pr_plot(self.prep_fd(backbone_fd), ld, self.stego.full_backbone_name)
+                self.generate_pr_plot(
+                    self.prep_fd(backbone_fd), ld, self.stego.full_backbone_name
+                )
         for filename in self.cfg.additional_pr_curves:
-            with open(join(self.cfg.pr_output_data_dir, filename), "rb") as handle:
+            with open(
+                join(self.cfg.pr_output_data_dir, filename), "rb"
+            ) as handle:
                 data = pickle.load(handle)
                 plt.plot(
                     data["recalls"],
                     data["precisions"],
-                    label="AP={}% {}".format(int(data["average_precision"] * 100), data["name"]),
+                    label="AP={}% {}".format(
+                        int(data["average_precision"] * 100), data["name"]
+                    ),
                 )
         plt.xlim([0, 1])
         plt.ylim([0, 1])
@@ -298,7 +355,10 @@ class Plotter:
         plt.savefig(
             join(
                 self.cfg.pr_output_dir,
-                self.cfg.dataset_name + "_" + self.stego.full_backbone_name + ".png",
+                self.cfg.dataset_name
+                + "_"
+                + self.stego.full_backbone_name
+                + ".png",
             )
         )
         plt.show()

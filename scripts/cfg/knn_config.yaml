@@ -1,5 +1,5 @@
-data_dir: "/home/tipriest/data/TerrainSeg/freiburg_forest"
-dataset_name: "freiburg_forest_cropped"
+data_dir: "/home/tipriest/data/TerrainSeg/hit_grass/videos_preprocessed"
+dataset_name: "VID_20220502_135318"
 image_sets:
   - "train"
   - "val"

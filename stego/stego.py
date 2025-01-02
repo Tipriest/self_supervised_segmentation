@@ -5,15 +5,15 @@
 # See LICENSE file in the project root for details.
 #
 #
+import os
+import io
 import torch
 import torch.nn.functional as F
 from torch import nn
 import pytorch_lightning as pl
 import omegaconf
-import os
 import wandb
 import matplotlib.pyplot as plt
-import io
 
 
 from stego.backbones.backbone import get_backbone
@@ -41,6 +41,7 @@ class Stego(pl.LightningModule):
                     os.path.dirname(__file__), "cfg/model_config.yaml"
                 ),
                 "r",
+                encoding="utf-8",
             ) as file:
                 self.cfg = omegaconf.OmegaConf.load(file)
                 cfg = self.cfg
@@ -135,8 +136,10 @@ class Stego(pl.LightningModule):
 
     def postprocess_crf(self, img, probs):
         """
-        Performs the CRF postprocessing step on the given image and a set of predicted class probabilities.
-        The class probabilities are interpolated to fit the image size inside the dense_crf function.
+        Performs the CRF postprocessing step on the given image and 
+        a set of predicted class probabilities.
+        The class probabilities are interpolated to fit the image size 
+        inside the dense_crf function.
         """
         pred = torch.empty(torch.Size(img.size()[:-3] + img.size()[-2:]))
         for j in range(img.shape[0]):
@@ -150,14 +153,18 @@ class Stego(pl.LightningModule):
     ):
         """
         Cluster probe postprocessing of STEGO.
-        For the given features, the cluster probe is run, followed by CRF (if enabled).
-        If enabled, performs the K-means clustering only of the segmentation features in the given batch.
+        For the given features, the cluster probe is run, 
+        followed by CRF (if enabled).
+        If enabled, performs the K-means clustering only of the segmentation 
+        features in the given batch.
 
         Arguments:
         - code - STEGO's segmentation features.
         - img - input image.
         - use_crf - enables CRF on the image and class probabilities from the cluster probe.
-        - image_clustering - enables per-image clustering. If True, STEGO's cluster probe is ignored and K-means is run on the given segmentation features to produce the cluster probabilities,
+        - image_clustering - enables per-image clustering. If True, STEGO's 
+          cluster probe is ignored and K-means is run on the given segmentation 
+          features to produce the cluster probabilities,
         """
         orig_code = code.permute(0, 2, 3, 1)
         code = F.interpolate(
@@ -212,15 +219,20 @@ class Stego(pl.LightningModule):
     ):
         """
         Complete postprocessing of STEGO.
-        For the given features, both the cluster and linear probes are run, followed by CRF (if enabled).
+        For the given features, both the cluster and linear probes are run, 
+        followed by CRF (if enabled).
         If enabled, performs the K-means clustering only of the segmentation features in the given batch.
 
         Arguments:
         - code - STEGO's segmentation features.
         - img - input image.
-        - use_crf_cluster - enables CRF on the image and class probabilities from the cluster probe.
-        - use_crf_linear - enables CRF on the image and class probabilities from the linear probe.
-        - image_clustering - enables per-image clustering. If True, STEGO's cluster probe is ignored and K-means is run on the given segmentation features to produce the cluster probabilities,
+        - use_crf_cluster - enables CRF on the image and class probabilities 
+          from the cluster probe.
+        - use_crf_linear - enables CRF on the image and class probabilities 
+          from the linear probe.
+        - image_clustering - enables per-image clustering. If True, STEGO's 
+          cluster probe is ignored and K-means is run on the given segmentation 
+          features to produce the cluster probabilities,
         """
         cluster_preds = self.postprocess_cluster(
             code, img, use_crf_cluster, image_clustering

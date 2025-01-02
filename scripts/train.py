@@ -12,7 +12,8 @@
 #
 # Before running, adjust parameters in cfg/train_config.yaml.
 #
-# The hyperparameters of the model and the learning rates can be adjusted in stego/cfg/model_config.yaml.
+# The hyperparameters of the model and the learning rates can be adjusted in 
+# stego/cfg/model_config.yaml.
 #
 ############################################
 
@@ -24,7 +25,7 @@ from omegaconf import DictConfig, OmegaConf
 
 # import pytorch_lightning as pl
 from pytorch_lightning import seed_everything
-from pytorch_lightning import Trainer
+import pytorch_lightning
 
 # from pytorch_lightning.loggers import TensorBoardLogger
 
@@ -44,7 +45,9 @@ from stego.utils import prep_args, get_transform
 from stego.data import ContrastiveSegDataset
 
 
-@hydra.main(config_path="cfg", config_name="train_config.yaml")
+@hydra.main(
+    config_path="cfg", config_name="train_config.yaml", version_base="1.1"
+)
 def my_app(cfg: DictConfig) -> None:
     OmegaConf.set_struct(cfg, False)
     print(OmegaConf.to_yaml(cfg))
@@ -103,15 +106,15 @@ def my_app(cfg: DictConfig) -> None:
         log_model=cfg.wandb_log_model,
     )
 
-    trainer = Trainer(
+    trainer = pytorch_lightning.Trainer(
         logger=wandb_logger,
         max_steps=cfg.max_steps,
         default_root_dir=cfg.checkpoint_dir,
         callbacks=[
             ModelCheckpoint(
                 dirpath=cfg.checkpoint_dir,
-                every_n_train_steps=400,
-                save_top_k=2,
+                every_n_train_steps=20,
+                save_top_k=2000,
                 monitor="val/cluster/mIoU",
                 mode="max",
             )
