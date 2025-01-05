@@ -153,6 +153,10 @@ class ContrastiveSegDataset(Dataset):
     to extract the knn corresponding image for STEGO training.
     It returns a dictionary containing an image and its positive pair
     (one of the nearest neighbor images).
+    STEGO使用的主要的数据集格式
+    内部使用DirectoryDataset类来加载图片
+    除此之外, 这个类使用预先计算的最近邻图片来为STEGO的训练提供KNN相关图片
+    它能够返回一个包含图片本身和它的最相似图片的文件夹
     """
 
     def __init__(

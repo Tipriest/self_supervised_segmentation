@@ -10,7 +10,6 @@ resolution: 320
 video_path: "/home/tipriest/data/TerrainSeg/hit_grass/Videos/VID_20220502_135318.mp4"
 output_video_path: "/home/tipriest/data/TerrainSeg/hit_grass/Videos/output.mp4"
 # Loader params
-batch_size: 8
 num_workers: 24
 
 run_crf: True

@@ -13,11 +13,13 @@
 # Before running the script, adjust the parameters in cfg/demo_config.yaml:
 # - image_dir - path to the folder with images (images from its subfolders won't be processed)
 # - model_path - path to the STEGO checkpoint
-# - output_root - path to the folder to save the segmentation in (segmentations will be saved in a subfolder named after experiment_name)
+# - output_root - path to the folder to save the segmentation in (segmentations
+#   will be saved in a subfolder named after experiment_name)
 #
 ############################################
 
-import os, sys
+import os
+import sys
 import hydra
 import torch.multiprocessing
 from PIL import Image
@@ -48,16 +50,18 @@ def my_app(cfg: DictConfig) -> None:
     os.makedirs(os.path.join(result_dir, "cluster"), exist_ok=True)
     os.makedirs(os.path.join(result_dir, "linear"), exist_ok=True)
 
-    model = Stego.load_from_checkpoint(cfg.model_path)
+    model = Stego.load_from_checkpoint(checkpoint_path=cfg.model_path)
 
     dataset = UnlabeledImageFolder(
         root=cfg.image_dir,
-        transform=get_transform(cfg.resolution, False, "center"),
+        transform=get_transform(
+            res=cfg.resolution, is_label=False, crop_type="center"
+        ),
     )
 
     loader = DataLoader(
-        dataset,
-        cfg.batch_size * 2,
+        dataset=dataset,
+        batch_size=cfg.batch_size * 2,
         shuffle=False,
         num_workers=cfg.num_workers,
         pin_memory=True,
@@ -67,7 +71,7 @@ def my_app(cfg: DictConfig) -> None:
     model.eval().cuda()
     cmap = create_cityscapes_colormap()
 
-    for i, (img, name) in enumerate(tqdm(loader)):
+    for _, (img, name) in enumerate(tqdm(loader)):
         with torch.no_grad():
             img = img.cuda()
             code = model.get_code(img)

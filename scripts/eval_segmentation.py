@@ -16,18 +16,30 @@
 
 
 import os
+import sys
 from os.path import join
-from collections import defaultdict
-from multiprocessing import Pool
+
+# from collections import defaultdict
+# from multiprocessing import Pool
 import hydra
-import seaborn as sns
+
+# import seaborn as sns
 import torch.multiprocessing
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import matplotlib as plt
 
-from stego.utils import *
+# import matplotlib as plt
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+grandparent_dir = os.path.dirname(script_dir)
+os.environ["PYTHONPATH"] = (
+    grandparent_dir + os.pathsep + os.environ.get("PYTHONPATH", "")
+)
+sys.path.append(grandparent_dir)
+
+# from stego.utils import *
+from stego.utils import prep_args, flexible_collate, get_transform
 from stego.stego import Stego
 from stego.data import ContrastiveSegDataset
 
@@ -47,15 +59,19 @@ def my_app(cfg: DictConfig) -> None:
         data_dir=cfg.data_dir,
         dataset_name=cfg.dataset_name,
         image_set="val",
-        transform=get_transform(cfg.resolution, False, "center"),
-        target_transform=get_transform(cfg.resolution, True, "center"),
+        transform=get_transform(
+            res=cfg.resolution, is_label=False, crop_type="center"
+        ),
+        target_transform=get_transform(
+            res=cfg.resolution, is_label=True, crop_type="center"
+        ),
         model_type=model.backbone_name,
         resolution=cfg.resolution,
     )
 
     test_loader = DataLoader(
-        test_dataset,
-        cfg.batch_size,
+        dataset = test_dataset,
+        batch_size=cfg.batch_size,
         shuffle=True,
         num_workers=cfg.num_workers,
         pin_memory=True,

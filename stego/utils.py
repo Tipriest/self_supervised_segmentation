@@ -115,6 +115,19 @@ def get_transform(res, is_label, crop_type, is_tensor=False, do_normalize=True):
     return T.Compose(transform)
 
 
+def get_pure_transform(res):
+    cropper = T.Lambda(lambda x: x)
+    res = (res, res)
+    transform = [T.Resize(res, T.InterpolationMode.NEAREST), cropper]
+    return T.Compose(transform)
+
+
+def get_inverse_transform(original_size):
+    # 逆操作：恢复到原始尺寸（1920x1080）
+    transform = T.Resize(original_size, T.InterpolationMode.NEAREST)
+    return transform
+
+
 normalize = T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 unnorm = UnNormalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
