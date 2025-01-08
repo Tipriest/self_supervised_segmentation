@@ -1,12 +1,14 @@
 import sys
 import os
+from datetime import datetime
+from tqdm import tqdm
+
 import cv2
 import numpy as np
 import torch
 from PIL import Image
 import hydra
 from omegaconf import DictConfig, OmegaConf
-from tqdm import tqdm
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 grandparent_dir = os.path.dirname(script_dir)
@@ -18,7 +20,6 @@ sys.path.append(grandparent_dir)
 from stego.utils import get_transform, get_inverse_transform
 from stego.data import create_cityscapes_colormap
 from stego.stego import Stego
-from datetime import datetime
 
 
 @hydra.main(
@@ -34,7 +35,9 @@ def my_app(cfg: DictConfig) -> None:
     video_path = cfg.video_path
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
     output_video_path = os.path.join(
-        cfg.output_video_path, current_time + "result.mp4"
+        cfg.output_video_base_path,
+        "inference_result",
+        current_time + cfg.model_path.split("/")[-1] + "result.mp4",
     )
 
     # 读取视频
