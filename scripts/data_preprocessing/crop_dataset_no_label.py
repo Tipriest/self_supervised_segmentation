@@ -36,8 +36,8 @@ from PIL import Image
 
 
 DATA_DIR = "/home/tipriest/data/TerrainSeg/hit_grass"
-INPUT_NAME = "videos_preprocessed/VID_20220502_135318"
-OUTPUT_NAME = "videos_cropped/VID_20220502_135318"
+INPUT_NAME = "VID_20220502_135318/2_preprocessed"
+OUTPUT_NAME = "VID_20220502_135318/3_cropped"
 
 # An image of size HxW will be five-cropped with target size of
 # (CROP_RATIO*H)x(CROP_RATIO*W)
@@ -69,24 +69,25 @@ def save_five_crop(input_name, output_dir, sample_name, file_ext):
 
 def preprocess_samples(input_dir, output_dir, subset, input_subset):
     print(f"Processing subset {subset}")
-    label_names = os.listdir(join(input_dir, "labels", input_subset))
-    for label_name in tqdm(label_names):
-        sample_name = label_name.split(".")[0]
+    img_names = os.listdir(join(input_dir, "imgs", input_subset))
+    for img_name in tqdm(img_names):
+        sample_name = img_name.split(".")[0]
         img_path = join(
             input_dir, "imgs", input_subset, sample_name + IMAGE_EXT
         )
-        label_path = join(input_dir, "labels", input_subset, label_name)
+        # label_path = join(input_dir, "labels", input_subset, img_name)
         save_five_crop(
             img_path, join(output_dir, "imgs", subset), sample_name, IMAGE_EXT
         )
-        save_five_crop(
-            label_path, join(output_dir, "labels", subset), sample_name, ".png"
-        )
+        # save_five_crop(
+        #     label_path, join(output_dir, "labels", subset), sample_name, ".png"
+        # )
 
 
 def main():
     input_dir = join(DATA_DIR, INPUT_NAME)
     output_dir = join(DATA_DIR, OUTPUT_NAME)
+    # TODO:如果遇到了之前的文件夹，删掉
     create_dataset_structure(output_dir)
     preprocess_samples(input_dir, output_dir, "train", "train")
     preprocess_samples(input_dir, output_dir, "val", "val")

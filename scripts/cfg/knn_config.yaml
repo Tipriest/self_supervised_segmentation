@@ -1,5 +1,5 @@
-data_dir: "/home/tipriest/data/TerrainSeg/hit_grass/videos_preprocessed"
-dataset_name: "VID_20220502_135318"
+data_dir: "/home/tipriest/data/TerrainSeg/hit_grass/VID_20220502_135318"
+dataset_name: "3_cropped"
 image_sets:
   - "train"
   - "val"
@@ -7,3 +7,5 @@ image_sets:
 resolution: 224
 batch_size: 96
 num_workers: 24
+
+num_neighbors: 30

@@ -28,6 +28,7 @@ import torch.nn.functional as F
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning import seed_everything
 from tqdm import tqdm
+from datetime import datetime
 
 
 grandparent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -149,7 +150,7 @@ def my_app(cfg: DictConfig) -> None:
                     # 返回的是 pairwise_sims 中每行的前30个最大值及其对应的索引。
                     # [1] 选择的是索引部分（即前30个相似度最大值的索引），
                     # 这些索引代表了每个样本与其他样本的前30个最近邻。
-                    nns = torch.topk(pairwise_sims, 30)
+                    nns = torch.topk(pairwise_sims, cfg.num_neighbors)
                     nns = nns[1]
                     all_nns.append(nns)
                     del pairwise_sims

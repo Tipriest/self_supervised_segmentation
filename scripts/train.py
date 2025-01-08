@@ -12,7 +12,7 @@
 #
 # Before running, adjust parameters in cfg/train_config.yaml.
 #
-# The hyperparameters of the model and the learning rates can be adjusted in 
+# The hyperparameters of the model and the learning rates can be adjusted in
 # stego/cfg/model_config.yaml.
 #
 ############################################
@@ -32,6 +32,7 @@ import pytorch_lightning
 # import torch.multiprocessing
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
+from datetime import datetime
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 grandparent_dir = os.path.dirname(script_dir)
@@ -108,18 +109,18 @@ def my_app(cfg: DictConfig) -> None:
 
     wandb_logger = WandbLogger(
         project=cfg.wandb_project,
-        name=cfg.wandb_name,
+        name=wandb_name,
         log_model=cfg.wandb_log_model,
     )
 
     trainer = pytorch_lightning.Trainer(
         logger=wandb_logger,
         max_steps=cfg.max_steps,
-        default_root_dir=cfg.checkpoint_dir,
+        default_root_dir=checkpoint_save_path,
         callbacks=[
             ModelCheckpoint(
-                dirpath=cfg.checkpoint_dir,
-                every_n_train_steps=20,
+                dirpath=checkpoint_save_path,
+                every_n_train_steps=cfg.val_check_interval,
                 save_top_k=2000,
                 monitor="val/cluster/mIoU",
                 mode="max",

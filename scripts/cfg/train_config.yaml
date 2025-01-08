@@ -29,24 +29,24 @@
 # wandb_log_model: "all"
 
 
-data_dir: "/home/tipriest/data/TerrainSeg/hit_grass/videos_preprocessed"
-dataset_name: "VID_20220502_135318"
-
+data_dir: "/home/tipriest/data/TerrainSeg/hit_grass/VID_20220502_135318"
+dataset_name: "3_cropped"
+nn_file_dir: "/home/tipriest/data/TerrainSeg/hit_grass/VID_20220502_135318/nns/2025-01-07_20-38"
 # Output directory to save the trained checkpoints during training
-checkpoint_dir: "/home/tipriest/data/TerrainSeg/hit_grass/models"
+checkpoint_dir: "/home/tipriest/data/TerrainSeg/hit_grass/VID_20220502_135318"
 # (Optional) Checkpoint path to initialize the training
-# model_path: "/home/tipriest/data/TerrainSeg/models/epoch=5-step=4800.ckpt"
+# model_path: "/home/tipriest/data/TerrainSeg/models/epoch=45-step=960-v3.ckpt"
 model_path: ""
 
 resolution: 224
-num_classes: 24
+num_classes: 8
 
-num_workers: 7
-batch_size: 32
+num_workers: 24
+batch_size: 96
 
 scalar_log_freq: 1
-max_steps: 1000
-val_check_interval: 7
+max_steps: 5000
+val_check_interval: 11
 
 num_neighbors: 5
 
@@ -56,5 +56,5 @@ extra_clusters: 0
 
 # WandB
 wandb_project: "stego"
-wandb_name: "VID_20220502_135318"
+wandb_name: "hit_grass"
 wandb_log_model: "all"
