@@ -40,38 +40,49 @@ class UnlabeledImageFolder(Dataset):
     def __len__(self):
         return len(self.images)
 
+def colors_hexcode2colors_tuple(colors_hexcode):
+    colors = []
+    for color in colors_hexcode:
+        # 将十六进制颜色码转换为 RGB 元组
+        r = (color >> 16) & 0xFF  # 提取红色分量
+        g = (color >> 8) & 0xFF   # 提取绿色分量
+        b = color & 0xFF          # 提取蓝色分量
+        # 结果为十进制格式，因此不需要进一步转换
+        colors.append((r, g, b))
+    return colors
 
+        
 def create_cityscapes_colormap():
-    colors = [
-        (128, 64, 128),
-        (244, 35, 232),
-        (250, 170, 160),
-        (230, 150, 140),
-        (70, 70, 70),
-        (102, 102, 156),
-        (190, 153, 153),
-        (180, 165, 180),
-        (150, 100, 100),
-        (150, 120, 90),
-        (153, 153, 153),
-        (153, 153, 153),
-        (250, 170, 30),
-        (220, 220, 0),
-        (107, 142, 35),
-        (152, 251, 152),
-        (70, 130, 180),
-        (220, 20, 60),
-        (255, 0, 0),
-        (0, 0, 142),
-        (0, 0, 70),
-        (0, 60, 100),
-        (0, 0, 90),
-        (0, 0, 110),
-        (0, 80, 100),
-        (0, 0, 230),
-        (119, 11, 32),
-        (0, 0, 0),
+    colors_hexcode = [
+        0x804080,
+        0xfaaa1e,
+        0xdcdc00,
+        0x98fb98,
+        0x00005a,
+        0x966464,
+        0xF423E8,
+        0xFAAAA0,
+        0x464646,
+        0x66669c,
+        0xbe9999,
+        0xb4a5b4,
+        0x96785a,
+        0x999999,
+        0x6b8e23,
+        0x4682b4,
+        0xdc143c,
+        0xff0000,
+        0x00008e,
+        0xe6968c,
+        0x000046,
+        0x003c64,
+        0x00006e,
+        0x005064,
+        0x0000e6,
+        0x770b20,
+        0x000000,
     ]
+    colors = colors_hexcode2colors_tuple(colors_hexcode)
     return np.array(colors)
 
 

@@ -25,6 +25,10 @@ _SLIC (WVN's segmentation method), standard STEGO, and STEGO with per-image feat
    * [License](#license)
 
 
+## TODO
+写一套自动的工作流程，每次train的时候自动把这一次的参数配置写到一个文件中，
+然后去推理后面的流程
+
 
 ## Setup
 
