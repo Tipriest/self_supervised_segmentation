@@ -1,15 +1,18 @@
 image_dir: "/home/tipriest/data/TerrainSeg/hit_grass/videos_preprocessed/VID_20220502_135318/imgs/train"
 output_root: "/home/tipriest/data/TerrainSeg/hit_grass/videos_preprocessed/VID_20220502_135318/imgs/output"
-model_path: "/home/tipriest/data/TerrainSeg/hit_grass/models/epoch=45-step=960.ckpt"
+model_path: "/home/tipriest/data/TerrainSeg/hit_grass/models/epoch=32-step=3120.ckpt"
 # model_path: "/root/catkin_ws/src/self_supervised_segmentation/models/FF_training_200.ckpt"
 # model_path: "/root/catkin_ws/src/self_supervised_segmentation/models/cityscapes_vit_base_1.ckpt"
 experiment_name: "hit_grass"
 resolution: 320
 
 
-video_path: "/home/tipriest/data/TerrainSeg/hit_grass/Videos/VID_20220502_135318.mp4"
-output_video_path: "/home/tipriest/data/TerrainSeg/hit_grass/Videos/output.mp4"
+video_path: "/home/tipriest/data/TerrainSeg/hit_grass/videos_record/VID_20220502_135318.mp4"
+output_video_path: "/home/tipriest/data/TerrainSeg/hit_grass/VID_20220502_135318"
 # Loader params
 num_workers: 24
+batch_size: 28
 
+use_crf_cluster: True
+use_crf_linear: False
 run_crf: True

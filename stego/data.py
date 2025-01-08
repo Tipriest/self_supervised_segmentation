@@ -182,7 +182,7 @@ class ContrastiveSegDataset(Dataset):
         resolution,
         aug_geometric_transform=None,
         aug_photometric_transform=None,
-        num_neighbors=5,
+        num_neighbors=5, #TODO: 这里看下这个num_neighbors的定义
         mask=False,
         pos_labels=False,
         pos_images=False,

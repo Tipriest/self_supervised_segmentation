@@ -7,7 +7,6 @@ from PIL import Image
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from tqdm import tqdm
-import torchvision
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 grandparent_dir = os.path.dirname(script_dir)
@@ -16,11 +15,15 @@ os.environ["PYTHONPATH"] = (
 )
 sys.path.append(grandparent_dir)
 
-from stego.utils import get_transform, get_inverse_transform, get_pure_transform
+from stego.utils import get_transform, get_inverse_transform
 from stego.data import create_cityscapes_colormap
 from stego.stego import Stego
+from datetime import datetime
 
-@hydra.main(config_path="cfg", config_name="video_inference.yaml", version_base="1.1")
+
+@hydra.main(
+    config_path="cfg", config_name="video_inference.yaml", version_base="1.1"
+)
 def my_app(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
     # 初始化模型
@@ -29,7 +32,10 @@ def my_app(cfg: DictConfig) -> None:
 
     # 视频路径
     video_path = cfg.video_path
-    output_video_path = cfg.output_video_path
+    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    output_video_path = os.path.join(
+        cfg.output_video_path, current_time + "result.mp4"
+    )
 
     # 读取视频
     cap = cv2.VideoCapture(video_path)
@@ -48,17 +54,20 @@ def my_app(cfg: DictConfig) -> None:
 
     # 定义颜色映射
     cmap = create_cityscapes_colormap()
+
+    # 修改这里，避免单次加载过多帧导致显存过大
+    batch_frames = []
+    pil_img_frames = []
+    batch_size = cfg.batch_size
     num_count = 0
-    # 创建 tqdm 进度条
+
+    # 使用 DataLoader 提前处理帧数据，优化内存和计算
     with tqdm(total=total_frames, desc="Processing frames", ncols=100) as pbar:
-        # 逐帧读取视频
         while cap.isOpened():
             ret, frame = cap.read()
-            if not ret or num_count > 250:
+            if not ret:
                 break  # 如果没有读取到帧，退出
-            num_count += 1
-            if num_count % 5 != 0:
-                continue
+
             # 将 BGR 转为 RGB，方便进行推理
             img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -66,102 +75,58 @@ def my_app(cfg: DictConfig) -> None:
             pil_img = Image.fromarray(img)
             transform = get_transform(cfg.resolution, False, None)
             pil_img_transformed = transform(pil_img)
-            img_tensor = pil_img_transformed.unsqueeze(0).cuda()
+            pil_img_frames.append(pil_img)
+            batch_frames.append(pil_img_transformed)
 
-            ####
-            # pil_img.save(
-            #     os.path.join(
-            #         f"/home/tipriest/Pictures/hit_grass/pil_img_{num_count}.png"
-            #     )
-            # )
-            transform2 = get_pure_transform(cfg.resolution)
-            pil_img_transform2 = transform2(pil_img)
-            # pil_img_transform2.save(
-            #     os.path.join(
-            #         f"/home/tipriest/Pictures/hit_grass/pil_img_transform2_{num_count}.png"
-            #     )
-            # )
+            if len(batch_frames) == batch_size:
+                img_tensor = torch.stack(batch_frames).cuda()
 
-            with torch.no_grad():
-                # 推理得到 CRF 后处理的结果
-                code = model.get_code(img_tensor)
-                cluster_crf, _ = model.postprocess(
-                    code=code,
-                    img=img_tensor,
-                    use_crf_cluster=True,
-                    use_crf_linear=True,
-                )
+                # 异步推理，避免等待
+                with torch.no_grad():
+                    # 推理得到 CRF 后处理的结果
+                    code = model.get_code(img_tensor)
+                    cluster_crfs, _ = model.postprocess(
+                        code=code,
+                        img=img_tensor,
+                        use_crf_cluster=cfg.use_crf_cluster,
+                        use_crf_linear=cfg.use_crf_linear,
+                    )
 
-                # 将 CRF 结果转换为 NumPy 数组
-                cluster_crf = cluster_crf.cpu()[0]
-                # 将结果应用到原视频帧上，使用透明度合成
-                alpha = 0.5  # 透明度
-                cluster_image = cmap[cluster_crf].astype(np.uint8)
-                # cluster_image.show()
-                cluster_image_bgr = cv2.cvtColor(
-                    cluster_image, cv2.COLOR_RGB2BGR
-                )
-                # Image.fromarray(cluster_image).save(
-                #     os.path.join("/home/tipriest/Pictures/testQ2E3D.png")
-                # )
-                # out.write(cluster_image_bgr)
-                # cv2.imshow("Frame with Overlay", frame)
+                    for i in range(batch_size):
+                        cluster_crf = cluster_crfs.cpu()[i]
 
-                ####
-                # inverse_transform = get_inverse_transform((1080, 1920))
-                # retransformed_img = inverse_transform(pil_img_transform2)
-                # retransformed_img.save(
-                #     os.path.join(
-                #         f"/home/tipriest/Pictures/hit_grass/retransformed_img_{num_count}.png"
-                #     )
-                # )
-                inverse_transform = get_inverse_transform((1080, 1920))
-                retransformed_img = inverse_transform(
-                    Image.fromarray(cluster_image_bgr)
-                )
-                # retransformed_img.save(
-                #     os.path.join(f"/home/tipriest/Pictures/FECewfwef_{num_count}.png")
-                # )
-                retransformed_img_bgr = cv2.cvtColor(
-                    np.array(retransformed_img), cv2.COLOR_RGB2BGR
-                )
+                        # 将结果应用到原视频帧上，使用透明度合成
+                        alpha = 0.5
+                        cluster_image = cmap[cluster_crf].astype(np.uint8)
+                        cluster_image_bgr = cv2.cvtColor(
+                            cluster_image, cv2.COLOR_RGB2BGR
+                        )
+                        inverse_transform = get_inverse_transform((1080, 1920))
+                        retransformed_img = inverse_transform(
+                            Image.fromarray(cluster_image_bgr)
+                        )
+                        overlay_cluster = cv2.addWeighted(
+                            cv2.cvtColor(
+                                np.array(pil_img_frames[i]), cv2.COLOR_RGB2BGR
+                            ),
+                            1 - alpha,
+                            cv2.cvtColor(
+                                np.array(retransformed_img), cv2.COLOR_RGB2BGR
+                            ),
+                            alpha,
+                            0,
+                        )
 
-                overlay_cluster = cv2.addWeighted(
-                    cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR),
-                    1 - alpha,
-                    cv2.cvtColor(
-                        np.array(retransformed_img), cv2.COLOR_RGB2BGR
-                    ),
-                    alpha,
-                    0,
-                )
-                cv2.imwrite(
-                    f"/home/tipriest/Pictures/hit_grass/overlay_cluster_{num_count}.png",
-                    overlay_cluster,
-                )
+                        # 将最终的帧写入输出视频
+                        out.write(overlay_cluster)
 
-                # out.write(retransformed_img_bgr)
-                # overlay_cluster = cv2.addWeighted(
-                #     frame, 1 - alpha, retransformed_img_bgr, alpha, 0
-                # )
-                # out.write(overlay_cluster)
+                # 清空 batch_frames 准备下一批
+                batch_frames = []
+                pil_img_frames = []
 
-                # 按 'q' 键退出
-                # if cv2.waitKey(1) & 0xFF == ord("q"):
-                #     break
-                # 将 CRF 结果图像转为 BGR 格式
-                #
+            pbar.update(1)
+            num_count += 1
 
-                # cv2.imshow("pic_test", cluster_image)
-                # cv2.waitKey(0)
-                # cv2.destroyAllWindows()
-                # 通过透明度将推理结果覆盖到原图像
-                #
-
-                # final_frame = overlay_cluster
-                # # 将最终的帧写入输出视频
-                # out.write(final_frame)
-                pbar.update(1)
     # 释放视频读取和写入对象
     cap.release()
     out.release()
