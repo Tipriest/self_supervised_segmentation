@@ -65,11 +65,9 @@ def load_image_to_tensor(
     return image_tensor
 
 
-def get_nn_file_name(data_dir, dataset_name, model_type, image_set, resolution):
+def get_nn_file_name(nn_file_dir, model_type, image_set, resolution):
     return os.path.join(
-        data_dir,
-        dataset_name,
-        "nns",
+        nn_file_dir,
         f"nns_{model_type}_{image_set}_{resolution}.npz",
     )
 

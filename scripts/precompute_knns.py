@@ -87,7 +87,11 @@ def my_app(cfg: DictConfig) -> None:
     """
     print(OmegaConf.to_yaml(cfg))
     seed_everything(seed=0)
-    os.makedirs(join(cfg.data_dir, cfg.dataset_name, "nns"), exist_ok=True)
+
+    # 获取当前时间，格式化为 yyyy-mm-dd_hh-mm
+    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    nns_save_path = join(cfg.data_dir, "nns", current_time)
+    os.makedirs(nns_save_path)
 
     image_sets = cfg.image_sets
 
@@ -97,17 +101,17 @@ def my_app(cfg: DictConfig) -> None:
 
     for image_set in image_sets:
         feature_cache_file = get_nn_file_name(
-            cfg.data_dir,
-            cfg.dataset_name,
-            model.backbone.backbone_type,
-            image_set,
-            res,
+            nn_file_dir=nns_save_path,
+            model_type=model.backbone.backbone_type,
+            image_set=image_set,
+            resolution=res,
         )
         if not os.path.exists(feature_cache_file):
             print(f"{feature_cache_file} not found, computing")
             dataset = ContrastiveSegDataset(
                 data_dir=cfg.data_dir,
                 dataset_name=cfg.dataset_name,
+                nn_file_dir=nns_save_path,
                 image_set=image_set,
                 transform=get_transform(res, False, "center"),
                 target_transform=get_transform(res, True, "center"),

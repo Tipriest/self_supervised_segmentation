@@ -51,7 +51,11 @@ from stego.data import ContrastiveSegDataset
 def my_app(cfg: DictConfig) -> None:
     OmegaConf.set_struct(cfg, False)
     print(OmegaConf.to_yaml(cfg))
-
+    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    checkpoint_save_path = os.path.join(
+        cfg.checkpoint_dir, "checkpoint", current_time
+    )
+    wandb_name = cfg.wandb_name + current_time
     seed_everything(seed=0)
 
     if cfg.model_path:
@@ -65,6 +69,7 @@ def my_app(cfg: DictConfig) -> None:
     train_dataset = ContrastiveSegDataset(
         data_dir=cfg.data_dir,
         dataset_name=cfg.dataset_name,
+        nn_file_dir=cfg.nn_file_dir,
         image_set="train",
         transform=get_transform(cfg.resolution, False, "center"),
         target_transform=get_transform(cfg.resolution, True, "center"),
@@ -78,6 +83,7 @@ def my_app(cfg: DictConfig) -> None:
     val_dataset = ContrastiveSegDataset(
         data_dir=cfg.data_dir,
         dataset_name=cfg.dataset_name,
+        nn_file_dir=cfg.nn_file_dir,
         image_set="val",
         transform=get_transform(cfg.resolution, False, "center"),
         target_transform=get_transform(cfg.resolution, True, "center"),

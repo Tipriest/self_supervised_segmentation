@@ -174,6 +174,7 @@ class ContrastiveSegDataset(Dataset):
         self,
         data_dir,
         dataset_name,
+        nn_file_dir,
         image_set,
         transform,
         target_transform,
@@ -203,7 +204,10 @@ class ContrastiveSegDataset(Dataset):
         )
 
         feature_cache_file = get_nn_file_name(
-            data_dir, dataset_name, model_type, image_set, resolution
+            nn_file_dir=nn_file_dir,
+            model_type=model_type,
+            image_set=image_set,
+            resolution=resolution,
         )
         if pos_labels or pos_images:
             if not os.path.exists(feature_cache_file):
