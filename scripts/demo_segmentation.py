@@ -43,7 +43,7 @@ from stego.stego import Stego
 torch.multiprocessing.set_sharing_strategy("file_system")
 
 
-@hydra.main(config_path="cfg", config_name="demo_config.yaml")
+@hydra.main(config_path="cfg", config_name="demo_config.yaml", version_base="1.1")
 def my_app(cfg: DictConfig) -> None:
     result_dir = os.path.join(cfg.output_root, cfg.experiment_name)
     os.makedirs(result_dir, exist_ok=True)

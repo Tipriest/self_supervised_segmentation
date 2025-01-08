@@ -20,8 +20,7 @@ from stego.utils import get_transform, get_inverse_transform, get_pure_transform
 from stego.data import create_cityscapes_colormap
 from stego.stego import Stego
 
-
-@hydra.main(config_path="cfg", config_name="video_inference.yaml")
+@hydra.main(config_path="cfg", config_name="video_inference.yaml", version_base="1.1")
 def my_app(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
     # 初始化模型

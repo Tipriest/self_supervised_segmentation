@@ -371,7 +371,7 @@ class Plotter:
             self.plot_pr()
 
 
-@hydra.main(config_path="cfg", config_name="plot_config.yaml")
+@hydra.main(config_path="cfg", config_name="plot_config.yaml", version_base="1.1")
 def my_app(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
     plotter = Plotter(cfg)

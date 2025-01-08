@@ -78,7 +78,7 @@ def get_feats(model, loader):
     return torch.cat(all_feats, dim=0).contiguous()
 
 
-@hydra.main(config_path="cfg", config_name="knn_config.yaml")
+@hydra.main(config_path="cfg", config_name="knn_config.yaml", version_base="1.1")
 def my_app(cfg: DictConfig) -> None:
     """_summary_
 

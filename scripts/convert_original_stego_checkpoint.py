@@ -232,7 +232,7 @@ class LitUnsupervisedSegmenter(pl.LightningModule):
         return self.net(x)[1]
 
 
-@hydra.main(config_path="cfg", config_name="convert_checkpoint_config.yaml")
+@hydra.main(config_path="cfg", config_name="convert_checkpoint_config.yaml", version_base="1.1")
 def my_app(cfg: DictConfig) -> None:
     model = LitUnsupervisedSegmenter.load_from_checkpoint(cfg.model_path)
     print(OmegaConf.to_yaml(model.cfg))

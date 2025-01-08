@@ -51,7 +51,7 @@ torch.multiprocessing.set_sharing_strategy("file_system")
 warnings.filterwarnings("ignore")
 
 
-@hydra.main(config_path="cfg", config_name="eval_wvn_config.yaml")
+@hydra.main(config_path="cfg", config_name="eval_wvn_config.yaml", version_base="1.1")
 def my_app(cfg: DictConfig) -> None:
     result_dir = os.path.join(cfg.output_root, cfg.experiment_name)
 
